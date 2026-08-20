@@ -1,0 +1,143 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\RequestIdempotencyKey;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Throwable;
+
+class IdempotencyService
+{
+    private const DEFAULT_TTL_SECONDS = 86400;
+
+    public function handle(Request $request, string $scope, callable $callback): JsonResponse
+    {
+        $idempotencyKey = $this->resolveIdempotencyKey($request);
+        if (! $idempotencyKey) {
+            return $this->normalizeResponse($callback());
+        }
+
+        $user = $request->user();
+        $requestHash = $this->buildRequestHash($request);
+        $scopeKey = "{$scope}";
+
+        $existing = $this->findLatestEntry($user->id, $scopeKey, $idempotencyKey);
+        if ($existing) {
+            if ($existing->request_hash !== $requestHash) {
+                return response()->json([
+                    'message' => 'Idempotency key reuse with different request body is not allowed.',
+                ], 422);
+            }
+
+            if ($existing->response_status === null) {
+                return response()->json([
+                    'message' => 'Idempotent request is still processing.',
+                ], 409);
+            }
+
+            return response()->json(
+                $existing->response_payload ?? [],
+                (int) $existing->response_status,
+            );
+        }
+
+        try {
+            $entry = DB::transaction(function () use ($user, $scopeKey, $idempotencyKey, $requestHash) {
+                return RequestIdempotencyKey::query()->create([
+                    'user_id' => $user->id,
+                    'scope' => $scopeKey,
+                    'idempotency_key' => $idempotencyKey,
+                    'request_hash' => $requestHash,
+                ]);
+            });
+        } catch (QueryException $queryException) {
+            $existing = $this->findLatestEntry($user->id, $scopeKey, $idempotencyKey);
+            if ($existing) {
+                if ($existing->response_status === null) {
+                    return response()->json([
+                        'message' => 'Idempotent request is still processing.',
+                    ], 409);
+                }
+
+                return response()->json(
+                    $existing->response_payload ?? [],
+                    (int) $existing->response_status,
+                );
+            }
+
+            throw $queryException;
+        }
+
+        try {
+            $response = $this->normalizeResponse($callback());
+        } catch (Throwable $exception) {
+            $entry->delete();
+            throw $exception;
+        }
+
+        $entry->update([
+            'response_status' => $response->getStatusCode(),
+            'response_payload' => $response->getData(true),
+            'completed_at' => now(),
+        ]);
+
+        return $response;
+    }
+
+    public function purgeExpiredEntries(): int
+    {
+        return RequestIdempotencyKey::query()
+            ->where('created_at', '<', now()->subSeconds(self::DEFAULT_TTL_SECONDS))
+            ->delete();
+    }
+
+    private function resolveIdempotencyKey(Request $request): ?string
+    {
+        $key = trim((string) $request->header('Idempotency-Key', ''));
+
+        return $key === '' ? null : $key;
+    }
+
+    private function buildRequestHash(Request $request): string
+    {
+        $payload = $request->all();
+        ksort($payload);
+
+        return hash('sha256', json_encode([
+            'method' => strtoupper($request->method()),
+            'path' => $request->path(),
+            'payload' => $payload,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION));
+    }
+
+    private function findLatestEntry(int $userId, string $scope, string $key): ?RequestIdempotencyKey
+    {
+        return RequestIdempotencyKey::query()
+            ->where('user_id', $userId)
+            ->where('scope', $scope)
+            ->where('idempotency_key', $key)
+            ->latest('id')
+            ->first();
+    }
+
+    private function normalizeResponse(mixed $response): JsonResponse
+    {
+        if ($response instanceof JsonResponse) {
+            return $response;
+        }
+
+        if (! is_array($response)) {
+            return response()->json([
+                'message' => 'Unexpected response contract.',
+            ], 500);
+        }
+
+        $status = (int) ($response['status'] ?? 200);
+        $data = $response['data'] ?? $response;
+
+        return response()->json($data, $status);
+    }
+}

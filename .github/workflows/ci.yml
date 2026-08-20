@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, ctype, fileinfo, openssl, pdo, pdo_mysql, pdo_sqlite
+          coverage: none
+
+      - name: Copy environment
+        run: cp .env.example .env
+
+      - name: Install composer dependencies
+        run: composer install --no-progress --prefer-dist --no-interaction
+
+      - name: PHP lint check
+        run: |
+          find app bootstrap config database routes -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Run PHP tests
+        run: php artisan test
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend bundle
+        run: npm run build
+
+      - name: Verify production bundle is committed
+        run: git diff --exit-code -- public/build
+
+      - name: Application smoke checks
+        run: |
+          php artisan route:list --name=api.health
+          php artisan config:cache
+          php artisan route:cache

@@ -1,0 +1,27 @@
+{
+    "name": "Lucky Draw PWA",
+    "short_name": "LuckyDraw",
+    "description": "Phone-first point wheel app.",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#ff6500",
+    "theme_color": "#ff6500",
+    "orientation": "portrait-primary",
+    "scope": "./",
+    "lang": "en",
+    "categories": ["entertainment", "finance"],
+    "icons": [
+        {
+            "src": "logo.png",
+            "sizes": "1080x1080",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "logotransparent.png",
+            "sizes": "1080x1080",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

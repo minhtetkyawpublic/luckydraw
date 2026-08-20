@@ -1,0 +1,122 @@
+LUCKY DRAW PWA - LOCALHOST STARTUP AND TESTING
+================================================
+
+PROJECT FOLDER
+C:\xampp\htdocs\luckydraw
+
+PREREQUISITES
+1. Start MySQL from the XAMPP Control Panel.
+2. Confirm `php -v` reports PHP 8.2 or newer.
+3. Confirm the .env file uses the luckydraw MySQL database.
+
+IMPORTANT FOR THIS XAMPP INSTALLATION
+Apache currently loads PHP 8.0.30, but this Laravel app requires PHP 8.2+.
+Use `php artisan serve` and the http://127.0.0.1:8000 links below. The direct
+http://127.0.0.1/luckydraw/public URL will not work until Apache's PHP module is
+upgraded to PHP 8.2 or newer.
+
+FIRST-TIME SETUP ONLY
+Open PowerShell or Command Prompt:
+
+cd C:\xampp\htdocs\luckydraw
+composer install
+npm install
+php artisan key:generate
+php artisan migrate --seed
+
+Do not run "php artisan key:generate" again after users/sessions are in use.
+Do not use migrate:fresh or db:wipe on a database containing real data.
+
+START THE APP - TERMINAL 1 (LARAVEL)
+cd C:\xampp\htdocs\luckydraw
+php artisan serve --host=127.0.0.1 --port=8000
+
+START THE APP - TERMINAL 2 (VITE)
+cd C:\xampp\htdocs\luckydraw
+npm run dev -- --host 127.0.0.1
+
+Open the application through Laravel at:
+http://127.0.0.1:8000
+
+LOGIN CREDENTIALS
+-----------------
+
+ADMIN
+Email: admin@luckydraw.local
+Password: admin1234
+
+SAMPLE USER
+Email: sample@luckydraw.local
+Phone: 09123456789
+Password: sample1234
+
+The login field accepts either the account email address or phone number.
+
+The sample user starts with 1,000 points on a new database. Its balance may be
+different after testing spins, bonuses, or admin point adjustments.
+
+TEST LINKS
+----------
+
+User Login:
+http://127.0.0.1:8000/login
+
+Administrator Login:
+http://127.0.0.1:8000/admin/login
+
+User Home:
+http://127.0.0.1:8000/dashboard
+
+Lucky Wheel / Play:
+http://127.0.0.1:8000/spin
+
+User Transaction History:
+http://127.0.0.1:8000/history
+
+User Settings:
+http://127.0.0.1:8000/settings
+
+Admin User and Point Management:
+http://127.0.0.1:8000/admin/users
+
+Admin Panel Main Link:
+http://127.0.0.1:8000/admin
+
+Admin Wheel Editor:
+http://127.0.0.1:8000/admin/spin-config
+
+Admin App Links and Home Content:
+http://127.0.0.1:8000/admin/app-settings
+
+Admin Account and Settings:
+http://127.0.0.1:8000/admin/settings
+
+WHEEL TEST PROCEDURE
+--------------------
+
+1. Log in as admin and open the Admin Wheel Editor.
+2. Edit the single wheel's paid-spin cost, number of slices, reward points for
+   each slice, and chance weight for each slice.
+3. Confirm the expected payout/margin indicator is acceptable and save.
+4. Log out and log in with the sample user.
+5. Note the user's balance before spinning.
+6. A free spin must produce:
+   final balance = starting balance + awarded points
+7. A paid spin must produce:
+   final balance = starting balance - configured spin cost + awarded points
+8. Open Transaction History. A paid spin must have one negative "Paid spin cost"
+   transaction and one positive "Paid spin reward" transaction.
+9. The wheel must stop on the server-selected segment and show the same reward in
+   the result modal. A daily free spin must become disabled after it is used.
+
+AUTOMATED VERIFICATION
+----------------------
+
+cd C:\xampp\htdocs\luckydraw
+php artisan test
+npm run test:wheel
+npm run build
+
+The automated tests include repeated wheel-to-segment alignment, exact free-spin
+and paid-spin wallet arithmetic, transaction ledger entries, cooldown behavior,
+daily free-spin limits, admin wheel editing, and authorization checks.
