@@ -15,6 +15,7 @@ deployment does not need Node.js at runtime.
    APP_ENV=production
    APP_DEBUG=false
    APP_URL=https://your-domain.example
+   ASSET_URL=https://your-domain.example
    APP_TIMEZONE=Asia/Yangon
    SESSION_DRIVER=database
    SESSION_SECURE_COOKIE=true
@@ -29,6 +30,14 @@ deployment does not need Node.js at runtime.
    LUCKYDRAW_ADMIN_PASSWORD=use-a-long-unique-password
    LUCKYDRAW_ADMIN_NAME="Lucky Draw Admin"
    LUCKYDRAW_SEED_SAMPLE_USER=false
+   ```
+
+   For a subfolder installation such as `public_html/luckydraw`, use:
+
+   ```dotenv
+   APP_URL=https://your-domain.example/luckydraw
+   ASSET_URL=https://your-domain.example/luckydraw
+   SESSION_PATH=/luckydraw
    ```
 
 5. Through Hostinger SSH, run:

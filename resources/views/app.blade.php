@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    @php
+        $configuredBasePath = rtrim((string) parse_url(config('app.url'), PHP_URL_PATH), '/');
+    @endphp
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,10 +13,10 @@
         <title>{{ config('app.name', 'Lucky Draw') }}</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
-        <link rel="manifest" href="{{ request()->getBasePath() }}/manifest.webmanifest">
-        <link rel="icon" type="image/png" sizes="32x32" href="{{ request()->getBasePath() }}/logo.png">
-        <link rel="icon" type="image/png" sizes="192x192" href="{{ request()->getBasePath() }}/logo.png">
-        <link rel="apple-touch-icon" sizes="180x180" href="{{ request()->getBasePath() }}/logotransparent.png">
+        <link rel="manifest" href="{{ $configuredBasePath }}/manifest.webmanifest">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ $configuredBasePath }}/logo.png">
+        <link rel="icon" type="image/png" sizes="192x192" href="{{ $configuredBasePath }}/logo.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ $configuredBasePath }}/logotransparent.png">
     </head>
     <body>
         <div id="app"></div>

@@ -1,8 +1,8 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Hostinger Web/Cloud hosting serves public_html as the document root.
-    # Keep Laravel in the repository root and route public requests into /public.
-    RewriteCond %{REQUEST_URI} !^/public/
+    # Work both at the domain root and in a subfolder such as /luckydraw.
+    # Stop rewriting after Apache has internally entered Laravel's /public folder.
+    RewriteRule ^public(?:/|$) - [L]
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
