@@ -31,13 +31,18 @@ class DailyBonusController extends Controller
             ], 409);
         }
 
-        $bonusPoints = (int) ApplicationSetting::current()->daily_bonus_points;
+        $settings = ApplicationSetting::current();
+        $schedule = $settings->daily_bonus_schedule;
+        $bonusPoints = (int) ($schedule[now()->dayOfWeek] ?? $settings->daily_bonus_points);
 
         try {
             $transaction = $this->dailyBonusService->claim($request->user(), $bonusPoints);
             $wallet = $this->walletService->getOrCreateWallet($request->user())->refresh();
         } catch (RuntimeException $e) {
-            return response()->json(['message' => $e->getMessage()], 409);
+            return response()->json([
+                'message' => $e->getMessage(),
+                'already_claimed' => str_contains(strtolower($e->getMessage()), 'already claimed'),
+            ], 409);
         }
 
         return response()->json([

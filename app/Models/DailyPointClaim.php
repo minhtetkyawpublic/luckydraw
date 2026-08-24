@@ -17,6 +17,14 @@ class DailyPointClaim extends Model
         'wallet_transaction_id',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'claim_date' => 'date',
+            'points_awarded' => 'integer',
+        ];
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

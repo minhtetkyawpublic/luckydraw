@@ -17,7 +17,7 @@ This roadmap is based on:
   - login (with remember-me),
   - claim **one daily bonus**,
   - do **one free spin/day**,
-  - do paid spins using points,
+  - exchange points for spin credits and use one credit per non-free spin,
   - view wallet/history.
 - Admin can:
   - create users,
@@ -25,7 +25,7 @@ This roadmap is based on:
   - adjust points manually,
   - manage spin configuration and segments.
 - No in-app payment flow (users buy points outside app; admin adds points manually).
-- Rewards are points-only.
+- Rewards can be points or spin credits, configured per wheel slice.
 
 ## Roadmap execution rules
 
@@ -115,8 +115,9 @@ This roadmap is based on:
 - [x] `POST /api/register` absent
 - [x] admin create user + user login with assigned credentials
 - [x] daily bonus one-time per day
+- [x] seven-day admin-configurable bonus schedule, Sunday rollover, and claimed/missed/today/upcoming states
 - [x] free spin one-time per day
-- [x] paid spin low balance rejection
+- [x] spin-credit balance rejection and point-to-spin package exchange
 - [x] immutable transaction entries with `balance_after`
 - [x] manifest and SW exist; app loads installable
 
@@ -136,7 +137,7 @@ This roadmap is based on:
 ### Backend tasks
 
 - [x] Add `GET /api/spins/status` with:
-  - config summary (`cost_points`, `cooldown_seconds`, `is_active`)
+  - config summary, spin-credit balance, cooldown, and free-spin availability
   - `can_free_spin_today`
   - `next_paid_spin_at`
   - `paid_spin_cooldown_remaining_seconds`
@@ -150,7 +151,7 @@ This roadmap is based on:
 - [x] Keep/create user, reset password, adjust points.
 - [x] Spin config management:
   - `PATCH /api/admin/spin-configuration` for the single operational wheel
-  - configure paid-spin cost, slice count, points per slice, and chance weight per slice
+  - configure exchange packages plus point/spin reward type, amount, slice count, and chance weight
 - [x] Validate config segments strictly:
   - `weight > 0`
   - at least one segment
@@ -171,6 +172,7 @@ This roadmap is based on:
 - [x] Add live chips/status on dashboard:
   - free spin status
   - bonus claim status
+  - seven-day bonus amounts and claimed/missed status
   - paid spin cooldown
   - wallet balance
 - [x] Add pull-to-refresh + pagination in history.
@@ -236,6 +238,9 @@ Turn the currently stable app into a more production-ready release with stronger
 - [x] Use `logo.png` and `logotransparent.png` in manifest, meta tags, and SW pre-cache.
 - [x] Do not show an app-version/update notification; updates apply through the normal service-worker lifecycle.
 - [x] Add robust background-sync fallback strategy for safe read retries.
+- [x] Add one replaceable admin announcement with version-based per-user unread state.
+- [x] Add encrypted per-device Web Push subscriptions, explicit Settings permission controls, and notification-click routing.
+- [x] Queue push fan-out in bounded batches and suppress delivery of stale announcement versions.
 
 6) Security/compliance and quality
 - [x] Add Phase 3 integration tests:

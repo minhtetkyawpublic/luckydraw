@@ -30,6 +30,10 @@ deployment does not need Node.js at runtime.
    LUCKYDRAW_ADMIN_PASSWORD=use-a-long-unique-password
    LUCKYDRAW_ADMIN_NAME="Lucky Draw Admin"
    LUCKYDRAW_SEED_SAMPLE_USER=false
+   QUEUE_CONNECTION=database
+   WEBPUSH_VAPID_SUBJECT=mailto:admin@mbyfootball.com
+   WEBPUSH_VAPID_PUBLIC_KEY=generate-once
+   WEBPUSH_VAPID_PRIVATE_KEY=generate-once
    ```
 
    For a subfolder installation such as `public_html/luckydraw`, use:
@@ -46,16 +50,25 @@ deployment does not need Node.js at runtime.
    cd /home/USER/domains/DOMAIN/public_html
    composer install --no-dev --optimize-autoloader --no-interaction
    php artisan key:generate
+   php artisan webpush:vapid
    php artisan migrate --force
    php artisan db:seed --force
    php artisan optimize
    ```
+
+   Run `php artisan webpush:vapid` only once. Copy its two values into `.env`,
+   then run `php artisan config:clear`. Never regenerate VAPID keys after users
+   subscribe or their existing device subscriptions will stop working.
 
 6. Configure a cron job to run every minute:
 
    ```text
    /usr/bin/php /home/USER/domains/DOMAIN/public_html/artisan schedule:run
    ```
+
+   This single scheduler cron also drains the database-backed `push` queue in
+   short non-overlapping runs; no always-running queue worker is required on
+   shared hosting.
 
 ## Automatic deployments
 

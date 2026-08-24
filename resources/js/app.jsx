@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import { calculateWheelRotation } from './wheelMath';
+import { appTranslate } from './translations';
 import React, {
     createContext,
     useCallback,
@@ -37,9 +38,12 @@ const AuthContext = createContext({
     loading: true,
     spinStatus: null,
     appSettings: null,
+    announcement: null,
     refreshAppSettings: async () => {},
     refreshMe: async () => {},
     refreshSpinStatus: async () => {},
+    refreshAnnouncement: async () => {},
+    markAnnouncementRead: async () => {},
     toasts: [],
     pushToast: () => {},
     login: async () => {},
@@ -48,69 +52,6 @@ const AuthContext = createContext({
     setLanguage: () => {},
     t: (key) => key,
 });
-
-const PLAYER_COPY = {
-    en: {
-        home: 'Home', play: 'Play', settings: 'Settings', points: 'points',
-        notifications_empty: 'You have no new notifications',
-        welcome: 'Welcome to Maung Bayin', login_intro: 'Sign in to collect points and spin.',
-        member_access: 'Member access', user_login: 'User Login', username: 'Username', password: 'Password',
-        remember_me: 'Remember me', signing_in: 'Signing in…', create_account: 'Create account with Telegram',
-        follow_more: 'follow for more', accounts_by_admin: 'Accounts are provided by the administrator.',
-        current_points: 'Current points', account: 'Account', member_account: 'Member account',
-        free_ready: 'Free spin ready today', free_used: 'Free spin used today', outside_website: 'Outside website',
-        partner_continue: 'Open the partner website to continue.', contact_admin: 'Contact administrator',
-        exchange_points: 'Exchange points', phone_numbers: 'Phone numbers', loading_account: 'Loading your account…',
-        point_store: 'Point store', buy_points: 'Buy points', how_buy: 'How to buy points', back_home: 'Back to home',
-        your_account: 'Your account', account_gameplay: 'Account & gameplay', spin_wheel: 'Lucky Draw Wheel',
-        daily_bonus: 'Daily bonus', transaction_history: 'Transaction history', language: 'Language',
-        english: 'English', burmese: 'မြန်မာ', connect: 'Connect', telegram_channel: 'Telegram channel',
-        facebook_page: 'Facebook page', tiktok_channel: 'TikTok channel', about_app: 'About this app',
-        logout: 'Logout', logging_out: 'Logging out…', close: 'Close', amount: 'Amount', balance_after: 'Balance after',
-        date_time: 'Date & time', note: 'Note', reward: 'Reward', spin_cost: 'Spin cost', wheel_segment: 'Wheel segment',
-        history: 'History', all: 'All', apply_filters: 'Apply filters', refresh: 'Refresh', loading: 'Loading…',
-        no_transactions: 'No transactions yet.', previous: 'Prev', next: 'Next', daily_claim_once: 'One free claim each day.',
-        claim_now: 'Claim Now', claiming: 'Claiming…', wheel_points_only: 'Wheel rewards are points-only.',
-        need_points: 'Need more points?', buy_from_admin: 'Buy points from admin', buy: 'Buy', daily_checkin: 'Daily check in',
-        ready: 'Ready', claimed: 'Claimed', claim_points: 'Claim points', claimed_today: 'Claimed today',
-        free_spin: 'Free Spin', paid_spin: 'Paid Spin', not_enough: 'Not enough points', spinning: 'Spinning', today: 'Today',
-        buy_points_short: 'Buy points', won: 'You won!', new_balance: 'New balance', awesome: 'Awesome!',
-        tx_daily_bonus: 'Daily bonus', tx_free_spin_reward: 'Free spin reward', tx_paid_spin_reward: 'Paid spin reward',
-        tx_spin_spend: 'Paid spin cost', tx_admin_adjustment: 'Points adjustment',
-    },
-    my: {
-        home: 'ပင်မ', play: 'ကစားရန်', settings: 'ဆက်တင်', points: 'ပွိုင့်',
-        notifications_empty: 'အကြောင်းကြားချက်အသစ် မရှိပါ',
-        welcome: 'မောင်းဘုရင်မှ ကြိုဆိုပါသည်', login_intro: 'ပွိုင့်ရယူပြီး ကံစမ်းရန် အကောင့်ဝင်ပါ။',
-        member_access: 'အသင်းဝင်', user_login: 'အကောင့်ဝင်ရန်', username: 'အသုံးပြုသူအမည်', password: 'စကားဝှက်',
-        remember_me: 'အကောင့်ကို မှတ်ထားမည်', signing_in: 'ဝင်ရောက်နေသည်…', create_account: 'Telegram မှ အကောင့်ဖွင့်ရန်',
-        follow_more: 'နောက်ထပ်ကြည့်ရှုရန်', accounts_by_admin: 'အကောင့်များကို စီမံသူထံမှ ရယူနိုင်ပါသည်။',
-        current_points: 'လက်ရှိပွိုင့်', account: 'အကောင့်', member_account: 'အသင်းဝင်အကောင့်',
-        free_ready: 'ယနေ့ အခမဲ့ကံစမ်းနိုင်သည်', free_used: 'ယနေ့ အခမဲ့ကံစမ်းပြီးပါပြီ', outside_website: 'ပြင်ပဝဘ်ဆိုက်',
-        partner_continue: 'ဆက်ကစားရန် ဝဘ်ဆိုက်ကိုဖွင့်ပါ။', contact_admin: 'စီမံသူကို ဆက်သွယ်ရန်',
-        exchange_points: 'ပွိုင့်လဲလှယ်ရန်', phone_numbers: 'ဖုန်းနံပါတ်များ', loading_account: 'အကောင့်ကို ဖွင့်နေသည်…',
-        point_store: 'ပွိုင့်ဆိုင်', buy_points: 'ပွိုင့်ဝယ်ရန်', how_buy: 'ပွိုင့်ဝယ်ယူနည်း', back_home: 'ပင်မသို့ပြန်ရန်',
-        your_account: 'သင့်အကောင့်', account_gameplay: 'အကောင့်နှင့် ကစားနည်း', spin_wheel: 'ကံစမ်းလှည့်ဘီး',
-        daily_bonus: 'နေ့စဉ်ဆု', transaction_history: 'ပွိုင့်မှတ်တမ်း', language: 'ဘာသာစကား',
-        english: 'English', burmese: 'မြန်မာ', connect: 'ဆက်သွယ်ရန်', telegram_channel: 'Telegram ချန်နယ်',
-        facebook_page: 'Facebook စာမျက်နှာ', tiktok_channel: 'TikTok ချန်နယ်', about_app: 'အက်ပ်အကြောင်း',
-        logout: 'အကောင့်ထွက်ရန်', logging_out: 'ထွက်နေသည်…', close: 'ပိတ်ရန်', amount: 'ပမာဏ', balance_after: 'လက်ကျန်ပွိုင့်',
-        date_time: 'နေ့ရက်နှင့်အချိန်', note: 'မှတ်ချက်', reward: 'ရရှိသည့်ပွိုင့်', spin_cost: 'အသုံးပြုပွိုင့်', wheel_segment: 'ရလဒ်',
-        history: 'မှတ်တမ်း', all: 'အားလုံး', apply_filters: 'စစ်ထုတ်ရန်', refresh: 'ပြန်ဖွင့်ရန်', loading: 'ဖွင့်နေသည်…',
-        no_transactions: 'မှတ်တမ်းမရှိသေးပါ။', previous: 'ရှေ့', next: 'နောက်', daily_claim_once: 'တစ်ရက်လျှင် တစ်ကြိမ် ရယူနိုင်သည်။',
-        claim_now: 'ရယူရန်', claiming: 'ရယူနေသည်…', wheel_points_only: 'ကံစမ်းလှည့်ဘီးမှ ပွိုင့်များသာ ရရှိမည်။',
-        need_points: 'ပွိုင့်လိုပါသလား?', buy_from_admin: 'စီမံသူထံမှ ပွိုင့်ဝယ်ပါ', buy: 'ဝယ်ရန်', daily_checkin: 'နေ့စဉ်ပွိုင့်',
-        ready: 'ရယူနိုင်သည်', claimed: 'ရယူပြီး', claim_points: 'ပွိုင့်ရယူရန်', claimed_today: 'ယနေ့ ရယူပြီး',
-        free_spin: 'အခမဲ့လှည့်ရန်', paid_spin: 'ပွိုင့်ဖြင့်လှည့်ရန်', not_enough: 'ပွိုင့်မလောက်ပါ', spinning: 'လှည့်နေသည်', today: 'ယနေ့',
-        buy_points_short: 'ပွိုင့်ဝယ်ရန်', won: 'ဆုရရှိပါသည်!', new_balance: 'လက်ကျန်ပွိုင့်', awesome: 'အိုကေ',
-        tx_daily_bonus: 'နေ့စဉ်ဆု', tx_free_spin_reward: 'အခမဲ့ကံစမ်းဆု', tx_paid_spin_reward: 'ပွိုင့်ကံစမ်းဆု',
-        tx_spin_spend: 'ကံစမ်းအသုံးပြုပွိုင့်', tx_admin_adjustment: 'စီမံသူပြင်ဆင်ပွိုင့်',
-    },
-};
-
-function playerTranslate(language, key) {
-    return PLAYER_COPY[language]?.[key] || PLAYER_COPY.en[key] || key;
-}
 
 function resolveClientBase() {
     const pathname = new URL(import.meta.url).pathname;
@@ -191,6 +132,7 @@ function humanizeTransactionType(type) {
         paid_spin_reward: 'Paid spin reward',
         spin_spend: 'Paid spin cost',
         admin_adjustment: 'Points adjustment',
+        spin_exchange: 'Points exchanged for spins',
     };
 
     return labels[type] || String(type || 'Transaction').replaceAll('_', ' ');
@@ -207,11 +149,24 @@ const DEFAULT_APP_SETTINGS = {
     facebook_page_url: '',
     tiktok_channel_url: '',
     about_content: 'မောင်းဘုရင် is a points-only Lucky Draw Wheel app.',
-    buy_points_instructions: 'To buy points, contact the administrator outside this app.\nSend your username or phone number, complete payment with the admin, and your wallet points will be added manually.',
+    how_to_use_terms: 'အပ်(ပ်)အသုံးပြုနည်း\n• အသုံးပြုသူအမည်နှင့် စကားဝှက်ဖြင့် လော့အင်ဝင်ပါ။\n• နေ့စဉ်ပွိုင့်ရယူပြီး ကံစမ်းဘီးကို လှည့်နိုင်ပါသည်။\n• ပွိုင့်ဝယ်ရန် အက်ဒမင်ကို ဆက်သွယ်ပါ။\n\nစည်းကမ်းချက်များ\n• တစ်ရက်လျှင် အခမဲ့တစ်ကြိမ် လှည့်နိုင်ပါသည်။\n• အပ်(ပ်)အတွင်းရှိ ပွိုင့်များကို ငွေသားအဖြစ် သတ်မှတ်မထားပါ။\n• အကူအညီလိုပါက အက်ဒမင်ကို ဆက်သွယ်ပါ။',
     daily_bonus_points: 20,
+    daily_bonus_schedule: [20, 20, 20, 20, 20, 20, 20],
     home_ticker_text: 'Welcome to မောင်းဘုရင် • One free spin every day • Points-only rewards • Contact admin to exchange or buy points',
     home_board_text: 'One free spin every day\nPoints-only wheel rewards\nPaid spins use wallet points\nDaily bonus available once\nAll activity is recorded\nContact admin for points',
 };
+
+const DAILY_BONUS_WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+function normalizeDailyBonusSchedule(settings, coerceNumbers = true) {
+    if (Array.isArray(settings?.daily_bonus_schedule) && settings.daily_bonus_schedule.length === 7) {
+        return settings.daily_bonus_schedule.map((points) => (
+            coerceNumbers ? Math.max(0, Number(points) || 0) : points
+        ));
+    }
+
+    return Array(7).fill(Math.max(0, Number(settings?.daily_bonus_points) || 0));
+}
 
 function safeExternalUrl(value) {
     const url = String(value || '').trim();
@@ -225,21 +180,78 @@ function splitSettingLines(value) {
         .filter(Boolean);
 }
 
+function urlBase64ToUint8Array(value) {
+    const padding = '='.repeat((4 - (value.length % 4)) % 4);
+    const base64 = (value + padding).replaceAll('-', '+').replaceAll('_', '/');
+    const rawData = window.atob(base64);
+    return Uint8Array.from([...rawData].map((character) => character.charCodeAt(0)));
+}
+
+function browserSupportsWebPush() {
+    return 'serviceWorker' in navigator
+        && 'PushManager' in window
+        && 'Notification' in window;
+}
+
+async function syncGrantedPushSubscription(api, createIfMissing = true) {
+    if (!browserSupportsWebPush() || Notification.permission !== 'granted') return false;
+
+    const configResponse = await api.get('/push/config');
+    if (!configResponse.data.configured || !configResponse.data.public_key) return false;
+
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription && createIfMissing) {
+        subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(configResponse.data.public_key),
+        });
+    }
+    if (!subscription) return false;
+
+    const serialized = subscription.toJSON();
+    await api.post('/push/subscriptions', {
+        endpoint: serialized.endpoint,
+        keys: serialized.keys,
+        content_encoding: 'aes128gcm',
+    });
+
+    return true;
+}
+
 function UserHeader({ onNotify }) {
-    const { t } = useContext(AuthContext);
+    const { announcement, t } = useContext(AuthContext);
+    const navigate = useNavigate();
+    const openAnnouncement = () => {
+        if (announcement) {
+            navigate('/announcement');
+            return;
+        }
+        onNotify?.();
+    };
+
     return (
-        <header className="user-header">
-            <div className="brand-lockup">
-                <img src="logotransparent.png" alt="မောင်းဘုရင်" />
-                <div>
-                    <strong>မောင်းဘုရင်</strong>
-                    <span>Play • Collect • Enjoy</span>
+        <>
+            <header className="user-header">
+                <div className="brand-lockup">
+                    <img src="logotransparent.png" alt="မောင်းဘုရင်" />
+                    <div>
+                        <strong>မောင်းဘုရင်</strong>
+                    </div>
                 </div>
-            </div>
-            <button className="icon-button" type="button" aria-label={t('notifications_empty')} onClick={onNotify}>
-                <AppIcon name="bell" size={23} />
-            </button>
-        </header>
+                <button className="icon-button notification-bell" type="button" aria-label={announcement ? t('open_announcement') : t('notifications_empty')} onClick={openAnnouncement}>
+                    <AppIcon name="bell" size={23} />
+                    {announcement?.unread ? <i aria-label={t('new_announcement')} /> : null}
+                </button>
+            </header>
+            {announcement ? (
+                <button className={`announcement-headline ${announcement.unread ? 'unread' : ''}`} type="button" onClick={openAnnouncement}>
+                    <span><AppIcon name="bell" size={18} />{announcement.unread ? t('new_announcement') : t('announcement')}</span>
+                    <strong>{announcement.title}</strong>
+                    <AppIcon name="arrow" size={18} />
+                </button>
+            ) : null}
+        </>
     );
 }
 
@@ -273,6 +285,13 @@ function resolveSpinBlockMessage(payload, actionType = 'paid') {
         return {
             type: 'err',
             text: `Insufficient points. Need ${required} but current balance is ${balance}.`,
+        };
+    }
+
+    if (code === 'INSUFFICIENT_SPINS') {
+        return {
+            type: 'warn',
+            text: 'You need a spin credit. Exchange points for spins first.',
         };
     }
 
@@ -375,6 +394,7 @@ function SpinnerCard({ title, children }) {
 }
 
 function AdminModal({ open, title, subtitle, onClose, children, wide = false }) {
+    const { t } = useContext(AuthContext);
     useEffect(() => {
         if (!open) return undefined;
         const onKeyDown = (event) => {
@@ -393,9 +413,41 @@ function AdminModal({ open, title, subtitle, onClose, children, wide = false }) 
             <section className={`admin-modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
                 <header>
                     <span><strong>{title}</strong>{subtitle ? <small>{subtitle}</small> : null}</span>
-                    <button type="button" onClick={onClose} aria-label="Close dialog">×</button>
+                    <button type="button" onClick={onClose} aria-label={t('close')}>×</button>
                 </header>
                 <div className="admin-modal-body">{children}</div>
+            </section>
+        </div>
+    );
+}
+
+function ConfirmationDialog({ open, title, children, confirmLabel, onConfirm, onCancel, busy = false, checkbox = null }) {
+    const { t } = useContext(AuthContext);
+
+    useEffect(() => {
+        if (!open) return undefined;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape' && !busy) onCancel();
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [open, busy, onCancel]);
+
+    if (!open) return null;
+
+    return (
+        <div className="confirmation-overlay" role="presentation" onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !busy) onCancel();
+        }}>
+            <section className="confirmation-dialog" role="dialog" aria-modal="true" aria-label={title}>
+                <div className="confirmation-icon"><AppIcon name="wheel" size={28} /></div>
+                <h2>{title}</h2>
+                <div className="confirmation-copy">{children}</div>
+                {checkbox}
+                <div className="confirmation-actions">
+                    <button className="btn secondary" type="button" disabled={busy} onClick={onCancel}>{t('cancel')}</button>
+                    <button className="btn primary" type="button" disabled={busy} onClick={onConfirm}>{busy ? t('loading') : (confirmLabel || t('confirm'))}</button>
+                </div>
             </section>
         </div>
     );
@@ -465,7 +517,7 @@ function landingPathFor(user) {
 }
 
 function AdminLayout({ children }) {
-    const { logout, pushToast } = useContext(AuthContext);
+    const { logout, pushToast, t } = useContext(AuthContext);
     const { basePath } = useContext(AppBaseContext);
     const navigate = useNavigate();
     const [signingOut, setSigningOut] = useState(false);
@@ -486,10 +538,10 @@ function AdminLayout({ children }) {
             <header className="admin-mobile-header">
                 <NavLink className="admin-brand" to="/admin">
                     <img src={`${basePath}/logotransparent.png`} alt="မောင်းဘုရင်" />
-                    <span><strong>မောင်းဘုရင်</strong><small>Admin</small></span>
+                    <span><strong>မောင်းဘုရင်</strong><small>{t('admin')}</small></span>
                 </NavLink>
                 <button className="admin-header-logout" type="button" onClick={signOut} disabled={signingOut}>
-                    {signingOut ? 'Wait…' : 'Logout'}
+                    {signingOut ? t('logging_out') : t('logout')}
                 </button>
             </header>
             <div className="admin-page-slot">{children}</div>
@@ -512,6 +564,7 @@ function AppShell() {
     const [toasts, setToasts] = useState([]);
     const [spinStatus, setSpinStatus] = useState(null);
     const [appSettings, setAppSettings] = useState(DEFAULT_APP_SETTINGS);
+    const [announcement, setAnnouncement] = useState(null);
     const [spinStatusLoading, setSpinStatusLoading] = useState(false);
     const [language, setLanguageState] = useState(() => {
         const saved = window.localStorage.getItem('maung-bayin-language');
@@ -524,7 +577,7 @@ function AppShell() {
         document.documentElement.lang = normalized === 'my' ? 'my' : 'en';
         setLanguageState(normalized);
     }, []);
-    const t = useCallback((key) => playerTranslate(language, key), [language]);
+    const t = useCallback((key) => appTranslate(language, key), [language]);
 
     useEffect(() => {
         document.documentElement.lang = language === 'my' ? 'my' : 'en';
@@ -571,15 +624,40 @@ function AppShell() {
         return settings;
     }, [api]);
 
+    const refreshAnnouncement = useCallback(async () => {
+        try {
+            const response = await api.get('/announcement');
+            setAnnouncement(response.data.announcement || null);
+            return response.data.announcement || null;
+        } catch (error) {
+            if (error?.response?.status === 401 || error?.response?.status === 403) {
+                setAnnouncement(null);
+                return null;
+            }
+            throw error;
+        }
+    }, [api]);
+
+    const markAnnouncementRead = useCallback(async () => {
+        const response = await api.post('/announcement/read');
+        const nextAnnouncement = response.data.announcement || null;
+        setAnnouncement(nextAnnouncement);
+        return nextAnnouncement;
+    }, [api]);
+
     useEffect(() => {
         const initialize = async () => {
             await refreshAppSettings().catch(() => {});
             try {
                 const currentUser = await refreshMe();
                 if (currentUser.role === 'user') {
-                    await refreshSpinStatus().catch(() => setSpinStatus(null));
+                    await Promise.all([
+                        refreshSpinStatus().catch(() => setSpinStatus(null)),
+                        refreshAnnouncement().catch(() => setAnnouncement(null)),
+                    ]);
                 } else {
                     setSpinStatus(null);
+                    setAnnouncement(null);
                 }
             } catch {
                 setMe(null);
@@ -590,7 +668,39 @@ function AppShell() {
         };
 
         initialize();
-    }, [api, refreshAppSettings, refreshMe, refreshSpinStatus]);
+    }, [api, refreshAnnouncement, refreshAppSettings, refreshMe, refreshSpinStatus]);
+
+    useEffect(() => {
+        if (me?.role !== 'user') return undefined;
+
+        const refreshIfVisible = () => {
+            if (document.visibilityState === 'visible') refreshAnnouncement().catch(() => {});
+        };
+        const interval = window.setInterval(refreshIfVisible, 60000);
+        document.addEventListener('visibilitychange', refreshIfVisible);
+
+        return () => {
+            window.clearInterval(interval);
+            document.removeEventListener('visibilitychange', refreshIfVisible);
+        };
+    }, [api, me?.role, refreshAnnouncement]);
+
+    useEffect(() => {
+        if (!('serviceWorker' in navigator)) return undefined;
+        const onServiceWorkerMessage = (event) => {
+            if (event.data?.type === 'ANNOUNCEMENT_UPDATED' && me?.role === 'user') {
+                refreshAnnouncement().catch(() => {});
+            } else if (event.data?.type === 'PUSH_SUBSCRIPTION_CHANGED' && me?.role === 'user') {
+                syncGrantedPushSubscription(api).catch(() => {});
+            }
+        };
+        navigator.serviceWorker.addEventListener('message', onServiceWorkerMessage);
+        return () => navigator.serviceWorker.removeEventListener('message', onServiceWorkerMessage);
+    }, [me?.role, refreshAnnouncement]);
+
+    useEffect(() => {
+        if (me?.role === 'user') syncGrantedPushSubscription(api).catch(() => {});
+    }, [api, me?.id, me?.role]);
 
     const login = async ({ identifier, password, rememberMe, portalRole = 'user' }) => {
         await axios.get(`${basePath}/sanctum/csrf-cookie`, {
@@ -610,7 +720,9 @@ function AppShell() {
         });
         setMe(response.data.user);
         const refreshes = [refreshAppSettings()];
-        if (response.data.user.role === 'user') refreshes.push(refreshSpinStatus());
+        if (response.data.user.role === 'user') {
+            refreshes.push(refreshSpinStatus(), refreshAnnouncement());
+        }
         await Promise.all(refreshes);
         return response.data;
     };
@@ -619,6 +731,7 @@ function AppShell() {
         await api.post('/auth/logout');
         setMe(null);
         setSpinStatus(null);
+        setAnnouncement(null);
     };
 
     return (
@@ -630,9 +743,12 @@ function AppShell() {
                 spinStatus,
                 spinStatusLoading,
                 appSettings,
+                announcement,
                 refreshAppSettings,
                 refreshMe,
                 refreshSpinStatus,
+                refreshAnnouncement,
+                markAnnouncementRead,
                 toasts,
                 pushToast,
                 login,
@@ -663,9 +779,13 @@ function AppShell() {
                         />
                         <Route
                             path="/buy-points"
+                            element={<Navigate to="/exchange-spins" replace />}
+                        />
+                        <Route
+                            path="/exchange-spins"
                             element={
                                 <ProtectedRoute user={me} roles={['user']}>
-                                    <BuyPointsScreen />
+                                    <ExchangeSpinsScreen />
                                 </ProtectedRoute>
                             }
                         />
@@ -698,6 +818,14 @@ function AppShell() {
                             element={
                                 <ProtectedRoute user={me} roles={['user']}>
                                     <HistoryScreen />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/announcement"
+                            element={
+                                <ProtectedRoute user={me} roles={['user']}>
+                                    <AnnouncementScreen />
                                 </ProtectedRoute>
                             }
                         />
@@ -742,6 +870,14 @@ function AppShell() {
                             }
                         />
                         <Route
+                            path="/admin/announcement"
+                            element={
+                                <AdminRoute user={me}>
+                                    <AdminAnnouncementScreen />
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
                             path="/admin/settings"
                             element={
                                 <AdminRoute user={me}>
@@ -768,19 +904,19 @@ function BottomNav() {
             <nav className="bottom-nav" aria-label="Admin navigation">
                 <NavLink to="/admin" end className={({ isActive }) => (isActive ? 'active' : '')}>
                     <AppIcon name="home" size={25} />
-                    <span>Overview</span>
+                    <span>{t('overview')}</span>
                 </NavLink>
                 <NavLink to="/admin/users" className={({ isActive }) => (isActive ? 'active' : '')}>
                     <AppIcon name="user" size={25} />
-                    <span>Users</span>
+                    <span>{t('users')}</span>
                 </NavLink>
                 <NavLink to="/admin/spin-config" className={({ isActive }) => (isActive ? 'active' : '')}>
                     <AppIcon name="wheel" size={25} />
-                    <span>Wheel</span>
+                    <span>{t('wheel')}</span>
                 </NavLink>
                 <NavLink to="/admin/settings" className={({ isActive }) => (isActive ? 'active' : '')}>
                     <AppIcon name="settings" size={25} />
-                    <span>Settings</span>
+                    <span>{t('settings')}</span>
                 </NavLink>
             </nav>
         );
@@ -804,7 +940,7 @@ function BottomNav() {
 }
 
 function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
-    const { login, pushToast, appSettings, t } = useContext(AuthContext);
+    const { login, pushToast, appSettings, language, setLanguage, t } = useContext(AuthContext);
     const { basePath } = useContext(AppBaseContext);
     const navigate = useNavigate();
     const isAdminPortal = portalRole === 'admin';
@@ -843,36 +979,42 @@ function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
         <main className={`login-page ${isAdminPortal ? 'admin-login-page' : ''}`}>
             <section className="login-brand">
                 <img src={`${basePath}/logotransparent.png`} alt="မောင်းဘုရင် logo" />
-                <h1>{isAdminPortal ? 'မောင်းဘုရင် Administrator' : t('welcome')}</h1>
-                <p>{isAdminPortal ? 'Manage users, points, wheel and app content.' : t('login_intro')}</p>
+                <h1>{isAdminPortal ? `မောင်းဘုရင် ${t('admin')}` : t('welcome')}</h1>
+                <p>{isAdminPortal ? t('admin_login_intro') : t('login_intro')}</p>
             </section>
             <section className="login-panel">
                 <div className="login-panel-inner">
-                    <p className="login-kicker">{isAdminPortal ? 'Administrator access' : t('member_access')}</p>
-                    <h2>{isAdminPortal ? 'Admin Login' : t('user_login')}</h2>
-                    {switchingAccount ? <p className="portal-session-note">Sign in below to switch from the currently active account.</p> : null}
+                    <p className="login-kicker">{isAdminPortal ? t('administrator_access') : t('member_access')}</p>
+                    <h2>{isAdminPortal ? t('admin_login') : t('user_login')}</h2>
+                    {isAdminPortal ? (
+                        <div className="login-language-picker" role="group" aria-label={t('language')}>
+                            <button type="button" className={language === 'en' ? 'active' : ''} onClick={() => setLanguage('en')}>EN</button>
+                            <button type="button" className={language === 'my' ? 'active' : ''} onClick={() => setLanguage('my')}>မြန်မာ</button>
+                        </div>
+                    ) : null}
+                    {switchingAccount ? <p className="portal-session-note">{t('switching_account')}</p> : null}
                     <form className="login-form" onSubmit={onSubmit}>
                         <label className="login-input-wrap">
                             <AppIcon name="user" size={24} />
-                            <span className="sr-only">{isAdminPortal ? 'Email or phone' : t('username')}</span>
+                            <span className="sr-only">{isAdminPortal ? t('email_or_phone') : t('username')}</span>
                             <input
                                 value={form.identifier}
                                 onChange={(event) =>
                                     setForm((prev) => ({ ...prev, identifier: event.target.value }))
                                 }
-                                placeholder={isAdminPortal ? 'Email or phone' : t('username')}
+                                placeholder={isAdminPortal ? t('email_or_phone') : t('username')}
                                 autoComplete="username"
                                 required
                             />
                         </label>
                         <label className="login-input-wrap">
                             <AppIcon name="lock" size={24} />
-                            <span className="sr-only">{isAdminPortal ? 'Password' : t('password')}</span>
+                            <span className="sr-only">{t('password')}</span>
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 value={form.password}
                                 onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
-                                placeholder={isAdminPortal ? 'Password' : t('password')}
+                                placeholder={t('password')}
                                 autoComplete="current-password"
                                 required
                             />
@@ -901,14 +1043,14 @@ function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
                                 checked={form.rememberMe}
                                 onChange={(event) => setForm((prev) => ({ ...prev, rememberMe: event.target.checked }))}
                             />
-                            <span>{isAdminPortal ? 'Remember me' : t('remember_me')}</span>
+                            <span>{t('remember_me')}</span>
                         </label>
                         <button className="login-button" type="submit" disabled={submitting}>
-                            {submitting ? (isAdminPortal ? 'Signing in…' : t('signing_in')) : (isAdminPortal ? 'Admin Login' : t('user_login'))}
+                            {submitting ? t('signing_in') : (isAdminPortal ? t('admin_login') : t('user_login'))}
                         </button>
                     </form>
                     {isAdminPortal ? (
-                        <NavLink className="portal-switch-link" to="/login">Go to user login</NavLink>
+                        <NavLink className="portal-switch-link" to="/login">{t('go_user_login')}</NavLink>
                     ) : null}
                     <div className="login-follow">
                         <span />
@@ -920,7 +1062,7 @@ function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
                         <button className="telegram" type="button" aria-label="Telegram" onClick={() => openSocial(appSettings?.telegram_channel_url, 'Telegram')}><SocialIcon name="telegram" /></button>
                         <button className="tiktok" type="button" aria-label="TikTok" onClick={() => openSocial(appSettings?.tiktok_channel_url, 'TikTok')}><SocialIcon name="tiktok" /></button>
                     </div>
-                    <p className="login-footnote">{isAdminPortal ? 'Authorized administrators only.' : t('accounts_by_admin')}</p>
+                    <p className="login-footnote">{isAdminPortal ? t('authorized_admins_only') : t('accounts_by_admin')}</p>
                 </div>
             </section>
         </main>
@@ -1004,7 +1146,6 @@ function DashboardScreen() {
                     <span>{t('account')}</span>
                     <strong>{me?.name || me?.email || 'မောင်းဘုရင် player'}</strong>
                     {me?.username ? <small>@{me.username}</small> : null}
-                    <small>{spinStatus?.can_free_spin_today ? t('free_ready') : t('free_used')}</small>
                 </div>
             </section>
 
@@ -1012,7 +1153,6 @@ function DashboardScreen() {
                 <div className="play-bet-copy">
                     <span>{t('outside_website')}</span>
                     <strong>{appSettings?.play_bet_label || DEFAULT_APP_SETTINGS.play_bet_label}</strong>
-                    <p>{t('partner_continue')}</p>
                 </div>
                 <button type="button" onClick={() => openExternal(appSettings?.play_bet_url, 'Play Bet')}>
                     Play <AppIcon name="arrow" size={19} />
@@ -1047,71 +1187,256 @@ function DashboardScreen() {
     );
 }
 
-function BuyPointsScreen() {
-    const { spinStatus, appSettings, pushToast, t } = useContext(AuthContext);
+function ExchangeSpinsScreen() {
+    const { api, appSettings, refreshSpinStatus, pushToast, t } = useContext(AuthContext);
     const navigate = useNavigate();
-    const balance = spinStatus?.wallet_balance || 0;
-    const instructionLines = splitSettingLines(appSettings?.buy_points_instructions || DEFAULT_APP_SETTINGS.buy_points_instructions);
-    const socialLinks = [
-        ['telegram_contact_url', 'Telegram', '✈'],
-        ['viber_contact_url', 'Viber', '☎'],
-        ['facebook_page_url', 'Facebook', 'f'],
-        ['tiktok_channel_url', 'TikTok', '♪'],
-    ].map(([key, label, icon]) => ({ label, icon, url: appSettings?.[key] })).filter((item) => item.url);
+    const [packages, setPackages] = useState([]);
+    const [pointBalance, setPointBalance] = useState(0);
+    const [spinBalance, setSpinBalance] = useState(0);
+    const [busyId, setBusyId] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [pendingPackage, setPendingPackage] = useState(null);
+    const exchangeBusyRef = useRef(false);
 
-    const openLink = (url, label) => {
-        const safeUrl = safeExternalUrl(url);
-        if (!safeUrl) {
-            pushToast(`${label} link is not configured yet.`, 'warn');
-            return;
+    const load = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/spin-exchange-packages');
+            setPackages(response.data.packages || []);
+            setPointBalance(response.data.wallet_balance || 0);
+            setSpinBalance(response.data.spin_balance || 0);
+        } catch (error) {
+            pushToast(error?.response?.data?.message || 'Could not load spin packages', 'err');
+        } finally {
+            setLoading(false);
         }
-        window.open(safeUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    useEffect(() => { load(); }, []);
+
+    const exchange = async (item) => {
+        if (exchangeBusyRef.current) return;
+        exchangeBusyRef.current = true;
+        setBusyId(item.id);
+        try {
+            const requestKey = window.crypto?.randomUUID?.() || `exchange-${Date.now()}-${Math.random()}`;
+            const response = await api.post(`/spin-exchange-packages/${item.id}/exchange`, null, {
+                headers: { 'Idempotency-Key': requestKey },
+            });
+            setPointBalance(response.data.wallet_balance);
+            setSpinBalance(response.data.spin_balance);
+            await refreshSpinStatus();
+            pushToast(t('exchange_success'), 'ok');
+        } catch (error) {
+            pushToast(error?.response?.data?.message || t('not_enough'), 'warn');
+        } finally {
+            exchangeBusyRef.current = false;
+            setBusyId(null);
+            setPendingPackage(null);
+        }
+    };
+
+    const openTelegram = () => {
+        const url = safeExternalUrl(appSettings?.telegram_contact_url);
+        if (!url) return pushToast('Telegram link is not configured yet.', 'warn');
+        window.open(url, '_blank', 'noopener,noreferrer');
     };
 
     return (
-        <main className="app-shell user-page buy-page">
+        <main className="app-shell user-page buy-page exchange-spins-page">
             <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
             <div className="section-heading-row">
-                <div>
-                    <span>{t('point_store')}</span>
-                    <h1>{t('buy_points')}</h1>
-                </div>
-                <BalancePill balance={balance} />
+                <div><span>{t('spin_packages')}</span><h1>{t('exchange_spins')}</h1></div>
+                <BalancePill balance={pointBalance} />
             </div>
-
-            <section className="buy-info-card">
-                <AppIcon name="bag" size={24} />
-                <div>
-                    <strong>{t('how_buy')}</strong>
-                    <div className="buy-instructions">
-                        {instructionLines.length ? instructionLines.map((line, index) => (
-                            <p key={`${index}-${line}`}>{line}</p>
-                        )) : <p>Contact the administrator outside this app to buy points.</p>}
-                    </div>
-                </div>
-            </section>
-
-            <section className="buy-social-card">
-                <strong>{t('contact_admin')}</strong>
-                <div className="buy-social-links">
-                    {socialLinks.length ? socialLinks.map((item) => (
-                        <button type="button" key={item.label} onClick={() => openLink(item.url, item.label)}>
-                            <span>{item.icon}</span>{item.label}
+            <div className="spin-credit-pill"><AppIcon name="wheel" size={20} /> {formatPoints(spinBalance)} {t('spins')}</div>
+            <p className="exchange-help">{t('exchange_spins_help')}</p>
+            {loading ? <p className="page-loading">{t('loading')}</p> : null}
+            {!loading && packages.length === 0 ? <p className="exchange-help">{t('no_exchange_packages')}</p> : null}
+            <section className="exchange-package-list">
+                {packages.map((item) => (
+                    <article className="exchange-package-card" key={item.id}>
+                        <div className="package-art"><AppIcon name="wheel" size={30} /></div>
+                        <div><strong>{formatPoints(item.points_cost)} {t('points')}</strong><span>{formatPoints(item.spins_amount)} {t('spins')}</span></div>
+                        <button type="button" disabled={busyId !== null || pointBalance < item.points_cost} onClick={() => setPendingPackage(item)}>
+                            {busyId === item.id ? t('exchanging') : t('exchange')}
                         </button>
-                    )) : <p>Admin contact links are not configured yet.</p>}
-                </div>
+                    </article>
+                ))}
             </section>
+            <button className="buy-points-telegram-card" type="button" onClick={openTelegram}>
+                <AppIcon name="bag" size={25} /><span><strong>{t('buy_points_telegram')}</strong><small>Telegram</small></span><AppIcon name="arrow" size={19} />
+            </button>
+            <button className="back-pill" type="button" onClick={() => navigate('/spin')}>{t('back_to_wheel')}</button>
+            <ConfirmationDialog
+                open={Boolean(pendingPackage)}
+                title={t('confirm_exchange')}
+                confirmLabel={t('exchange')}
+                busy={busyId !== null}
+                onCancel={() => setPendingPackage(null)}
+                onConfirm={() => pendingPackage && exchange(pendingPackage)}
+            >
+                <strong className="confirmation-exchange-value">
+                    {formatPoints(pendingPackage?.points_cost || 0)} {t('points')} → {formatPoints(pendingPackage?.spins_amount || 0)} {t('spins')}
+                </strong>
+                <p>{t('exchange_deduct_notice')}</p>
+            </ConfirmationDialog>
+        </main>
+    );
+}
 
+function AnnouncementScreen() {
+    const { announcement, refreshAnnouncement, markAnnouncementRead, pushToast, language, t } = useContext(AuthContext);
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(!announcement);
+
+    useEffect(() => {
+        let active = true;
+        const open = async () => {
+            try {
+                const current = announcement || await refreshAnnouncement();
+                if (current) await markAnnouncementRead();
+            } catch (error) {
+                if (active) pushToast(error?.response?.data?.message || t('announcement_load_failed'), 'err');
+            } finally {
+                if (active) setLoading(false);
+            }
+        };
+        open();
+        return () => { active = false; };
+    }, []);
+
+    return (
+        <main className="app-shell user-page sub-page announcement-page">
+            <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
+            <section className="announcement-full-card">
+                {loading ? <p className="page-loading">{t('loading')}</p> : null}
+                {!loading && !announcement ? <p className="announcement-empty">{t('no_announcement')}</p> : null}
+                {announcement ? (
+                    <>
+                        <span className="announcement-kicker"><AppIcon name="bell" size={18} />{t('announcement')}</span>
+                        <h1>{announcement.title}</h1>
+                        <small>{t('published_on')} {new Date(announcement.published_at).toLocaleString(language === 'my' ? 'my-MM' : 'en-US')}</small>
+                        <div className="announcement-body">{announcement.body}</div>
+                    </>
+                ) : null}
+            </section>
             <button className="back-pill" type="button" onClick={() => navigate('/dashboard')}>{t('back_home')}</button>
         </main>
     );
 }
 
 function SettingsScreen() {
-    const { me, spinStatus, appSettings, logout, pushToast, language, setLanguage, t } = useContext(AuthContext);
+    const { api, me, spinStatus, appSettings, logout, pushToast, language, setLanguage, t } = useContext(AuthContext);
     const navigate = useNavigate();
     const [signingOut, setSigningOut] = useState(false);
     const [aboutOpen, setAboutOpen] = useState(false);
+    const [termsOpen, setTermsOpen] = useState(false);
+    const [pushState, setPushState] = useState('checking');
+    const [pushBusy, setPushBusy] = useState(false);
+
+    const browserSubscription = async () => {
+        const registration = await navigator.serviceWorker.ready;
+        return {
+            registration,
+            subscription: await registration.pushManager.getSubscription(),
+        };
+    };
+
+    const savePushSubscription = async (subscription) => {
+        const serialized = subscription.toJSON();
+        await api.post('/push/subscriptions', {
+            endpoint: serialized.endpoint,
+            keys: serialized.keys,
+            content_encoding: 'aes128gcm',
+        });
+    };
+
+    useEffect(() => {
+        let active = true;
+        const check = async () => {
+            if (!browserSupportsWebPush()) {
+                if (active) setPushState('unsupported');
+                return;
+            }
+            try {
+                const response = await api.get('/push/config');
+                if (!response.data.configured) {
+                    if (active) setPushState('unavailable');
+                    return;
+                }
+                if (Notification.permission === 'denied') {
+                    if (active) setPushState('blocked');
+                    return;
+                }
+                const { subscription } = await browserSubscription();
+                if (subscription && Notification.permission === 'granted') {
+                    await savePushSubscription(subscription);
+                    if (active) setPushState('enabled');
+                } else if (active) {
+                    setPushState('disabled');
+                }
+            } catch {
+                if (active) setPushState('unavailable');
+            }
+        };
+        check();
+        return () => { active = false; };
+    }, [api]);
+
+    const enablePushNotifications = async () => {
+        if (!browserSupportsWebPush()) {
+            setPushState('unsupported');
+            return;
+        }
+        setPushBusy(true);
+        try {
+            const configResponse = await api.get('/push/config');
+            if (!configResponse.data.configured || !configResponse.data.public_key) {
+                setPushState('unavailable');
+                pushToast(t('push_unavailable'), 'warn');
+                return;
+            }
+            const permission = Notification.permission === 'granted'
+                ? 'granted'
+                : await Notification.requestPermission();
+            if (permission !== 'granted') {
+                setPushState(permission === 'denied' ? 'blocked' : 'disabled');
+                pushToast(t('notification_permission_not_granted'), 'warn');
+                return;
+            }
+            const { registration, subscription: existingSubscription } = await browserSubscription();
+            const subscription = existingSubscription || await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(configResponse.data.public_key),
+            });
+            await savePushSubscription(subscription);
+            setPushState('enabled');
+            pushToast(t('notifications_enabled'), 'ok');
+        } catch (error) {
+            setPushState(Notification.permission === 'denied' ? 'blocked' : 'disabled');
+            pushToast(error?.response?.data?.message || t('notifications_enable_failed'), 'err');
+        } finally {
+            setPushBusy(false);
+        }
+    };
+
+    const disablePushNotifications = async () => {
+        setPushBusy(true);
+        try {
+            const { subscription } = await browserSubscription();
+            if (subscription) {
+                await api.delete('/push/subscriptions', { data: { endpoint: subscription.endpoint } });
+                await subscription.unsubscribe();
+            }
+            setPushState('disabled');
+            pushToast(t('notifications_disabled'), 'ok');
+        } catch (error) {
+            pushToast(error?.response?.data?.message || t('notifications_disable_failed'), 'err');
+        } finally {
+            setPushBusy(false);
+        }
+    };
 
     const openConfiguredLink = (url, label) => {
         const safeUrl = safeExternalUrl(url);
@@ -1134,7 +1459,7 @@ function SettingsScreen() {
     };
 
     const menuItems = [
-        { label: t('spin_wheel'), icon: 'wheel', action: () => navigate('/spin') },
+        { label: t('how_to_use_terms'), icon: 'content', action: () => setTermsOpen(true) },
         { label: t('daily_bonus'), icon: 'coin', action: () => navigate('/daily-bonus') },
         { label: t('transaction_history'), icon: 'history', action: () => navigate('/history') },
     ];
@@ -1172,6 +1497,21 @@ function SettingsScreen() {
                 </div>
             </section>
 
+            <section className="settings-card notification-settings-card">
+                <p className="settings-label">{t('notifications')}</p>
+                <div className="notification-setting-summary">
+                    <span className={`notification-state ${pushState}`}><AppIcon name="bell" size={20} /></span>
+                    <div><strong>{t(`push_state_${pushState}`)}</strong><small>{t('push_notifications_help')}</small></div>
+                </div>
+                {pushState === 'blocked' ? <p className="notification-support-note">{t('push_blocked_help')}</p> : null}
+                {pushState === 'unsupported' ? <p className="notification-support-note">{t('push_ios_install_help')}</p> : null}
+                {pushState === 'enabled' ? (
+                    <button className="btn secondary notification-toggle" type="button" disabled={pushBusy} onClick={disablePushNotifications}>{t('disable_notifications')}</button>
+                ) : (
+                    <button className="btn primary notification-toggle" type="button" disabled={pushBusy || pushState === 'blocked' || pushState === 'unsupported' || pushState === 'unavailable' || pushState === 'checking'} onClick={enablePushNotifications}>{pushBusy ? t('loading') : t('allow_notifications')}</button>
+                )}
+            </section>
+
             <section className="settings-card">
                 <p className="settings-label">{t('connect')}</p>
                 <button className="settings-row" type="button" onClick={() => openConfiguredLink(appSettings?.telegram_channel_url, 'Telegram channel')}>
@@ -1193,6 +1533,17 @@ function SettingsScreen() {
             </section>
 
             <p className="app-version">မောင်းဘုရင် PWA · version 1.0</p>
+            {termsOpen ? (
+                <div className="detail-overlay centered-overlay" role="dialog" aria-modal="true" aria-label={t('how_to_use_terms')}>
+                    <section className="info-modal terms-modal">
+                        <h2>{t('how_to_use_terms')}</h2>
+                        <div className="terms-copy">
+                            {appSettings?.how_to_use_terms || t('terms_content_missing')}
+                        </div>
+                        <button className="btn primary" type="button" onClick={() => setTermsOpen(false)}>{t('close')}</button>
+                    </section>
+                </div>
+            ) : null}
             {aboutOpen ? (
                 <div className="detail-overlay centered-overlay" role="dialog" aria-modal="true" aria-label="About this app">
                     <section className="info-modal">
@@ -1245,6 +1596,7 @@ function DailyBonusScreen() {
 }
 
 function SpinWheel({ size, segments, rotation, transitionMs = 2200, centerLabel = 'LUCKY', centerActionLabel, centerActionSubLabel, onCenterAction, centerDisabled = false }) {
+    const { t } = useContext(AuthContext);
     const segmentCount = segments.length || 1;
     const segmentAngle = 360 / segmentCount;
     const palette = ['#ffca28', '#ff7a00', '#7c3aed', '#ec4899', '#22c55e', '#0ea5e9'];
@@ -1256,10 +1608,10 @@ function SpinWheel({ size, segments, rotation, transitionMs = 2200, centerLabel 
         }).join(', ')})`
         : 'conic-gradient(#ffca28 0deg 90deg, #ff7a00 90deg 180deg, #7c3aed 180deg 270deg, #22c55e 270deg 360deg)';
     const displaySegments = segments.length ? segments : [
-        { id: 'one', label: '5 pts' },
-        { id: 'two', label: '10 pts' },
-        { id: 'three', label: '20 pts' },
-        { id: 'four', label: '50 pts' },
+        { id: 'one', points_reward: 5 },
+        { id: 'two', points_reward: 10 },
+        { id: 'three', points_reward: 20 },
+        { id: 'four', points_reward: 50 },
     ];
     const labelAngle = 360 / displaySegments.length;
 
@@ -1280,14 +1632,16 @@ function SpinWheel({ size, segments, rotation, transitionMs = 2200, centerLabel 
                     {displaySegments.map((segment, index) => (
                         <span
                             className="wheel-label"
-                            key={segment.id || segment.label}
+                            key={segment.id || index}
                             style={{
                                 transform: `translate(-50%, -50%) rotate(${index * labelAngle + labelAngle / 2}deg) translateY(-${Math.round(size * 0.34)}px) rotate(${-index * labelAngle - labelAngle / 2}deg)`,
                                 color: segment.text_color || '#ffffff',
                             }}
                         >
-                            <b>{segment.label}</b>
-                            <small>{formatPoints(segment.points_reward ?? 0)} pts</small>
+                            <small>
+                                {formatPoints(segment.reward_amount ?? segment.points_reward ?? 0)}{' '}
+                                {segment.reward_type === 'spins' ? t('spins') : t('points')}
+                            </small>
                         </span>
                     ))}
                 </div>
@@ -1302,7 +1656,7 @@ function SpinWheel({ size, segments, rotation, transitionMs = 2200, centerLabel 
 }
 
 function SpinScreen() {
-    const { api, spinStatus, refreshSpinStatus, pushToast, t } = useContext(AuthContext);
+    const { api, spinStatus, refreshSpinStatus, pushToast, appSettings, t } = useContext(AuthContext);
     const navigate = useNavigate();
     const [result, setResult] = useState({ text: '', type: 'ok' });
     const [winModal, setWinModal] = useState(null);
@@ -1315,8 +1669,11 @@ function SpinScreen() {
     const [spinRequestKey, setSpinRequestKey] = useState('');
     const [claimBusy, setClaimBusy] = useState(false);
     const [claimMessage, setClaimMessage] = useState('');
+    const [pendingSpinType, setPendingSpinType] = useState(null);
+    const [skipFutureSpinConfirmation, setSkipFutureSpinConfirmation] = useState(false);
     const intervalRef = useRef(null);
     const spinResultTimeoutRef = useRef(null);
+    const spinBusyRef = useRef(false);
 
     useEffect(() => {
         setLocalStatus(spinStatus);
@@ -1351,9 +1708,10 @@ function SpinScreen() {
     const segments = localStatus?.segments || [];
 
     const runSpin = async (type) => {
-        if (busy) {
+        if (spinBusyRef.current || busy) {
             return;
         }
+        spinBusyRef.current = true;
         const requestKey = spinRequestKey || window.crypto?.randomUUID?.() || `spin-${Date.now()}-${Math.random()}`;
         setBusy(true);
         setSpinning(false);
@@ -1376,7 +1734,6 @@ function SpinScreen() {
                     : segments.findIndex((segment) => segment.id === segmentId || segment.label === segmentLabel);
             const safeIndex = segmentIndex >= 0 ? segmentIndex : 0;
             const nextRotation = calculateWheelRotation(rotation, safeIndex, segments.length, 6);
-            const segmentText = segmentLabel || (segments[safeIndex]?.label || 'mystery');
             const balanceAfter = event.balance_after ?? response.data.wallet?.balance ?? 0;
             const rewardType = event.is_free_spin ? 'free' : 'paid';
             const nextTransitionMs = 2300 + Math.min(1400, safeIndex * 75);
@@ -1392,14 +1749,16 @@ function SpinScreen() {
             spinResultTimeoutRef.current = setTimeout(() => {
                 setWinModal({
                     rewardType,
-                    points: event.points_awarded,
-                    segment: segmentText,
+                    awardType: event.reward_type || 'points',
+                    amount: event.reward_amount ?? event.points_awarded,
                     balanceAfter,
+                    spinBalanceAfter: event.spin_balance_after,
                 });
                 setBusy(false);
                 setSpinning(false);
+                spinBusyRef.current = false;
                 refreshSpinStatus();
-                pushToast(`You won ${event.points_awarded} points`, 'ok');
+                pushToast(`You won ${event.reward_amount ?? event.points_awarded} ${event.reward_type === 'spins' ? 'spins' : 'points'}`, 'ok');
                 setSpinRequestKey('');
                 if (type === 'free') {
                     setLocalStatus((prev) => (prev ? { ...prev, can_free_spin_today: false } : prev));
@@ -1425,6 +1784,7 @@ function SpinScreen() {
             pushToast(blocked?.actionHint || message, blocked.type);
             setBusy(false);
             setSpinning(false);
+            spinBusyRef.current = false;
             if (!response) {
                 return;
             }
@@ -1438,6 +1798,40 @@ function SpinScreen() {
         }
     };
 
+    const requestSpin = (type) => {
+        let skipConfirmation = false;
+        try {
+            skipConfirmation = window.localStorage.getItem('mby.skipSpinConfirmation.v1') === '1';
+        } catch {
+            skipConfirmation = false;
+        }
+
+        if (skipConfirmation) {
+            runSpin(type);
+            return;
+        }
+
+        setSkipFutureSpinConfirmation(false);
+        setPendingSpinType(type);
+    };
+
+    const confirmPendingSpin = () => {
+        const type = pendingSpinType;
+        if (!type) return;
+
+        if (skipFutureSpinConfirmation) {
+            try {
+                window.localStorage.setItem('mby.skipSpinConfirmation.v1', '1');
+            } catch {
+                // Storage can be unavailable in private/restricted browser modes.
+            }
+        }
+
+        setPendingSpinType(null);
+        setSkipFutureSpinConfirmation(false);
+        runSpin(type);
+    };
+
     useEffect(() => {
         return () => {
             if (spinResultTimeoutRef.current) {
@@ -1446,42 +1840,48 @@ function SpinScreen() {
         };
     }, []);
 
-    const paidSpinCost = Number(localStatus?.config?.cost_points) || 0;
-    const walletBalance = Number(localStatus?.wallet_balance) || 0;
-    const hasEnoughPaidSpinPoints = walletBalance >= paidSpinCost;
+    const spinBalance = Number(localStatus?.spin_balance) || 0;
+    const hasSpinCredit = spinBalance > 0;
     const centerDisabled = busy || spinning || !localStatus?.config;
     const centerActionLabel = spinning
         ? t('spinning')
         : localStatus?.can_free_spin_today
           ? t('free_spin')
-          : !hasEnoughPaidSpinPoints
-            ? t('not_enough')
-            : t('paid_spin');
+          : hasSpinCredit
+            ? `${t('spin_singular')} × ${formatPoints(spinBalance)}`
+            : t('not_enough_spins');
     const centerActionSubLabel = spinning
         ? ''
         : localStatus?.can_free_spin_today
           ? t('today')
-          : !hasEnoughPaidSpinPoints
-            ? t('buy_points_short')
-            : `${formatPoints(paidSpinCost)} pts`;
+          : hasSpinCredit ? '' : t('get_spins');
 
     const handleCenterSpinAction = () => {
         if (busy || spinning) {
             return;
         }
         if (localStatus?.can_free_spin_today) {
-            runSpin('free');
+            requestSpin('free');
             return;
         }
-        if (!hasEnoughPaidSpinPoints) {
-            navigate('/buy-points');
+        if (!hasSpinCredit) {
+            navigate('/exchange-spins');
             return;
         }
         if ((cooldownRemaining || 0) > 0) {
             pushToast(`Please wait ${formatTimeRemaining(cooldownRemaining)}`, 'warn');
             return;
         }
-        runSpin('paid');
+        requestSpin('paid');
+    };
+
+    const openTelegram = () => {
+        const url = safeExternalUrl(appSettings?.telegram_contact_url);
+        if (!url) {
+            pushToast('Telegram link is not configured yet.', 'warn');
+            return;
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
     };
 
     const claimDailyPoints = async () => {
@@ -1513,7 +1913,6 @@ function SpinScreen() {
         <main className="app-shell user-page sub-page">
             <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
             <SpinnerCard title={localStatus?.config?.name || t('spin_wheel')}>
-                <p className="subtitle">{t('wheel_points_only')}</p>
                 <div className="spacer spin-wheel-wrapper">
                     <SpinWheel
                         size={260}
@@ -1531,11 +1930,14 @@ function SpinScreen() {
                     <section className="buy-banner spin-buy-banner">
                         <div className="buy-banner-icon"><AppIcon name="coin" size={30} /></div>
                         <div>
-                            <span>{t('need_points')}</span>
-                            <strong>{t('buy_from_admin')}</strong>
+                            <span>{t('spin_packages')}</span>
+                            <strong>{t('exchange_spins')}</strong>
                         </div>
-                        <button type="button" onClick={() => navigate('/buy-points')}>{t('buy')}</button>
+                        <button type="button" onClick={() => navigate('/exchange-spins')}>{t('exchange')}</button>
                     </section>
+                    <button className="spin-buy-points-link" type="button" onClick={openTelegram}>
+                        <AppIcon name="bag" size={21} /> {t('buy_points_telegram')}
+                    </button>
                     <section className="daily-card spin-daily-card">
                         <div className="daily-card-heading">
                             <div>
@@ -1545,6 +1947,15 @@ function SpinScreen() {
                             <strong className={`daily-status ${localStatus?.can_claim_daily_bonus ? 'ready' : ''}`}>
                                 {localStatus?.can_claim_daily_bonus ? t('ready') : t('claimed')}
                             </strong>
+                        </div>
+                        <div className="daily-week-grid" aria-label={t('daily_points_schedule')}>
+                            {(localStatus?.daily_bonus_week || []).map((day) => (
+                                <article className={`daily-week-day ${day.status}`} key={day.date} title={`${day.weekday}: ${day.points} ${t('points')}`}>
+                                    <span>{t('day')} {day.day}</span>
+                                    <strong>+{formatPoints(day.points)}</strong>
+                                    <small>{t(day.status)}</small>
+                                </article>
+                            ))}
                         </div>
                         <button className="collect-button" type="button" onClick={claimDailyPoints} disabled={claimBusy || !localStatus?.can_claim_daily_bonus}>
                             {claimBusy ? t('claiming') : localStatus?.can_claim_daily_bonus ? t('claim_points') : t('claimed_today')}
@@ -1564,13 +1975,30 @@ function SpinScreen() {
                             <div className="win-coin"><AppIcon name="coin" size={42} /></div>
                             <span className="win-kicker">{winModal.rewardType === 'free' ? 'Daily free spin' : 'Paid spin'}</span>
                             <h2>{t('won')}</h2>
-                            <strong className="win-points">+{formatPoints(winModal.points)} {t('points')}</strong>
-                            <p>{winModal.segment}</p>
-                            <small>{t('new_balance')}: {formatPoints(winModal.balanceAfter)} {t('points')}</small>
+                            <strong className="win-points">+{formatPoints(winModal.amount)} {winModal.awardType === 'spins' ? t('spins') : t('points')}</strong>
+                            <small>{t('new_balance')}: {formatPoints(winModal.awardType === 'spins' ? winModal.spinBalanceAfter : winModal.balanceAfter)} {winModal.awardType === 'spins' ? t('spins') : t('points')}</small>
                             <button className="btn primary" type="button" onClick={() => setWinModal(null)}>{t('awesome')}</button>
                         </section>
                     </div>
                 ) : null}
+                <ConfirmationDialog
+                    open={Boolean(pendingSpinType)}
+                    title={t('confirm_spin')}
+                    confirmLabel={pendingSpinType === 'free' ? t('free_spin') : t('spin_singular')}
+                    onCancel={() => {
+                        setPendingSpinType(null);
+                        setSkipFutureSpinConfirmation(false);
+                    }}
+                    onConfirm={confirmPendingSpin}
+                    checkbox={(
+                        <label className="confirmation-checkbox">
+                            <input type="checkbox" checked={skipFutureSpinConfirmation} onChange={(event) => setSkipFutureSpinConfirmation(event.target.checked)} />
+                            <span>{t('do_not_show_again')}</span>
+                        </label>
+                    )}
+                >
+                    <p>{pendingSpinType === 'free' ? t('free_spin_confirmation') : t('credit_spin_confirmation')}</p>
+                </ConfirmationDialog>
             </SpinnerCard>
         </main>
     );
@@ -1690,6 +2118,7 @@ function HistoryScreen() {
                         <option value="paid_spin_reward">Paid Spin Reward</option>
                         <option value="spin_spend">Spin Spend</option>
                         <option value="admin_adjustment">Admin Adjustment</option>
+                        <option value="spin_exchange">{t('tx_spin_exchange')}</option>
                     </select>
                     <input
                         type="date"
@@ -1770,23 +2199,100 @@ function HistoryScreen() {
 }
 
 function AdminDashboardScreen() {
+    const { t } = useContext(AuthContext);
     return (
         <main className="app-shell admin-page admin-dashboard">
             <div className="admin-page-heading">
-                <div><span>Administration</span><h1>Overview</h1></div>
+                <div><span>{t('admin')}</span><h1>{t('overview')}</h1></div>
             </div>
             <nav className="admin-quick-grid" aria-label="Primary admin actions">
-                <NavLink className="admin-quick-card users" to="/admin/users"><AppIcon name="user" size={24} /><span><strong>Users</strong><small>Accounts & points</small></span><AppIcon name="arrow" size={16} /></NavLink>
-                <NavLink className="admin-quick-card wheel" to="/admin/spin-config"><AppIcon name="wheel" size={24} /><span><strong>Wheel</strong><small>Rewards & cost</small></span><AppIcon name="arrow" size={16} /></NavLink>
-                <NavLink className="admin-quick-card content" to="/admin/app-settings"><AppIcon name="content" size={24} /><span><strong>App content</strong><small>Login, links & Home</small></span><AppIcon name="arrow" size={16} /></NavLink>
-                <NavLink className="admin-quick-card account" to="/admin/settings"><AppIcon name="shield" size={24} /><span><strong>Admin account</strong><small>Profile & password</small></span><AppIcon name="arrow" size={16} /></NavLink>
+                <NavLink className="admin-quick-card users" to="/admin/users"><AppIcon name="user" size={24} /><span><strong>{t('users')}</strong><small>{t('accounts_points')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
+                <NavLink className="admin-quick-card wheel" to="/admin/spin-config"><AppIcon name="wheel" size={24} /><span><strong>{t('wheel')}</strong><small>{t('rewards_cost')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
+                <NavLink className="admin-quick-card content" to="/admin/app-settings"><AppIcon name="content" size={24} /><span><strong>{t('app_content')}</strong><small>{t('login_links_home')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
+                <NavLink className="admin-quick-card announcement" to="/admin/announcement"><AppIcon name="bell" size={24} /><span><strong>{t('notification_post')}</strong><small>{t('publish_single_post')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
+                <NavLink className="admin-quick-card account" to="/admin/settings"><AppIcon name="shield" size={24} /><span><strong>{t('admin_account')}</strong><small>{t('profile_password')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
             </nav>
         </main>
     );
 }
 
+function AdminAnnouncementScreen() {
+    const { api, pushToast, language, t } = useContext(AuthContext);
+    const [form, setForm] = useState({ title: '', body: '' });
+    const [announcement, setAnnouncement] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [publishing, setPublishing] = useState(false);
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const response = await api.get('/admin/announcement');
+                const current = response.data.announcement || null;
+                setAnnouncement(current);
+                setForm({ title: current?.title || '', body: current?.body || '' });
+            } catch (error) {
+                pushToast(error?.response?.data?.message || t('announcement_load_failed'), 'err');
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
+    }, [api, pushToast]);
+
+    const publish = async (event) => {
+        event.preventDefault();
+        setPublishing(true);
+        try {
+            const response = await api.put('/admin/announcement', form);
+            setAnnouncement(response.data.announcement);
+            setForm({
+                title: response.data.announcement.title,
+                body: response.data.announcement.body,
+            });
+            pushToast(response.data.push_configured ? t('announcement_published') : t('announcement_published_push_unavailable'), response.data.push_configured ? 'ok' : 'warn');
+        } catch (error) {
+            const validation = error?.response?.data?.errors;
+            const firstError = validation ? Object.values(validation).flat()[0] : null;
+            pushToast(firstError || error?.response?.data?.message || t('announcement_publish_failed'), 'err');
+        } finally {
+            setPublishing(false);
+        }
+    };
+
+    return (
+        <main className="app-shell admin-page admin-announcement-page">
+            <SpinnerCard title={t('admin_notification_post')}>
+                <p className="subtitle">{t('single_post_replace_help')}</p>
+                {loading ? <p className="page-loading">{t('loading')}</p> : (
+                    <form className="admin-modal-form spacer" onSubmit={publish}>
+                        <label>
+                            <span>{t('post_title')}</span>
+                            <input className="input" maxLength="180" value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} required />
+                            <small>{form.title.length}/180</small>
+                        </label>
+                        <label>
+                            <span>{t('post_content')}</span>
+                            <textarea className="input announcement-admin-body" rows="10" maxLength="20000" value={form.body} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} required />
+                            <small>{form.body.length}/20000</small>
+                        </label>
+                        <button className="btn primary" type="submit" disabled={publishing}>{publishing ? t('publishing') : t('publish_update')}</button>
+                    </form>
+                )}
+                {announcement?.version > 0 ? (
+                    <section className="announcement-admin-preview spacer">
+                        <span>{t('current_post')} · v{announcement.version}</span>
+                        <strong>{announcement.title}</strong>
+                        <small>{t('published_on')} {new Date(announcement.published_at).toLocaleString(language === 'my' ? 'my-MM' : 'en-US')}</small>
+                        <p>{announcement.body}</p>
+                    </section>
+                ) : <p className="subtitle spacer">{t('never_published')}</p>}
+            </SpinnerCard>
+        </main>
+    );
+}
+
 function AdminUsersScreen() {
-    const { api, pushToast } = useContext(AuthContext);
+    const { api, pushToast, t } = useContext(AuthContext);
     const navigate = useNavigate();
     const [query, setQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
@@ -1826,7 +2332,7 @@ function AdminUsersScreen() {
             setMeta(response.data.meta || {});
             setPage(nextPage);
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Failed to load users', 'err');
+            pushToast(error?.response?.data?.message || t('failed_load_users'), 'err');
         } finally {
             setLoading(false);
         }
@@ -1848,10 +2354,10 @@ function AdminUsersScreen() {
                 password: '',
             });
             setCreateModalOpen(false);
-            pushToast('User created', 'ok');
+            pushToast(t('user_created'), 'ok');
             await loadUsers(page);
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Failed to create user', 'err');
+            pushToast(error?.response?.data?.message || t('failed_create_user'), 'err');
         }
     };
 
@@ -1859,30 +2365,30 @@ function AdminUsersScreen() {
         try {
             const next = user.status === 'active' ? 'disabled' : 'active';
             await api.patch(`/admin/users/${user.id}`, { status: next });
-            pushToast(`User ${next === 'active' ? 'enabled' : 'disabled'}`, 'ok');
+            pushToast(next === 'active' ? t('user_enabled') : t('user_disabled'), 'ok');
             setAccountModalUser(null);
             await loadUsers(page);
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Update failed', 'err');
+            pushToast(error?.response?.data?.message || t('update_failed'), 'err');
         }
     };
 
     const adjustPoints = async () => {
         if (!adjustUserId || adjustAmount === '') {
-            pushToast('Select user and amount first', 'warn');
+            pushToast(t('select_user_amount'), 'warn');
             return;
         }
         try {
             await api.post(`/admin/users/${adjustUserId}/adjust-points`, {
                 amount: Number(adjustAmount),
             });
-            pushToast('Points adjusted', 'ok');
+            pushToast(t('points_adjusted'), 'ok');
             setAdjustAmount('');
             setAdjustUserId('');
             setPointModalUser(null);
             await loadUsers(page);
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Adjustment failed', 'err');
+            pushToast(error?.response?.data?.message || t('adjustment_failed'), 'err');
         }
     };
 
@@ -1894,19 +2400,19 @@ function AdminUsersScreen() {
             await api.post(`/admin/users/${passwordModalUser.id}/reset-password`, {
                 password: newPassword,
             });
-            pushToast('Password reset', 'ok');
+            pushToast(t('password_reset_done'), 'ok');
             setPasswordModalUser(null);
             setNewPassword('');
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Password reset failed', 'err');
+            pushToast(error?.response?.data?.message || t('password_reset_failed'), 'err');
         }
     };
 
     return (
         <main className="app-shell admin-page">
-            <SpinnerCard title="Admin — Users">
+            <SpinnerCard title={`${t('admin')} — ${t('users')}`}>
                 <button className="admin-create-user-button spacer" type="button" onClick={() => setCreateModalOpen(true)}>
-                    <span><strong>Create user account</strong><small>Add a new player</small></span>
+                    <span><strong>{t('create_user_account')}</strong><small>{t('add_new_player')}</small></span>
                     <AppIcon name="arrow" size={17} />
                 </button>
 
@@ -1918,7 +2424,7 @@ function AdminUsersScreen() {
                         type="search"
                         enterKeyHint="search"
                         value={query}
-                        placeholder="Search name / username"
+                        placeholder={t('search_name_username')}
                         onChange={(event) => setQuery(event.target.value)}
                     />
                     <select value={statusFilter} onChange={(event) => {
@@ -1926,14 +2432,14 @@ function AdminUsersScreen() {
                         setStatusFilter(status);
                         loadUsers(1, { status });
                     }} aria-label="Filter users by status">
-                        <option value="">All</option>
-                        <option value="active">Active</option>
-                        <option value="disabled">Disabled</option>
+                        <option value="">{t('all')}</option>
+                        <option value="active">{t('active')}</option>
+                        <option value="disabled">{t('disabled')}</option>
                     </select>
                 </form>
 
                 <div className="spacer">
-                    {loading && <p className="subtitle">Loading users…</p>}
+                    {loading && <p className="subtitle">{t('loading_users')}</p>}
                     <ul className="history-list">
                         {users.map((user) => (
                             <li className="admin-user-row" key={user.id}>
@@ -1941,7 +2447,7 @@ function AdminUsersScreen() {
                                 <div className="admin-user-summary">
                                     <span className={`admin-status-dot ${user.status}`} />
                                     <span><strong>{user.name}</strong><small>@{user.username}</small></span>
-                                    <strong>{formatPoints(user.wallet_balance)} pts</strong>
+                                    <strong>{formatPoints(user.wallet_balance)} {t('points')} · {formatPoints(user.spin_balance)} {t('spins')}</strong>
                                     <AppIcon name="arrow" size={16} />
                                 </div>
                                 </button>
@@ -1950,7 +2456,7 @@ function AdminUsersScreen() {
                     </ul>
                     <div className="history-pagination compact-pagination">
                         <button className="btn secondary" disabled={page <= 1} onClick={() => loadUsers(page - 1)} type="button">
-                            Prev
+                            {t('previous')}
                         </button>
                         <span className="toolbar-caption">
                             {meta.current_page}/{meta.last_page}
@@ -1961,23 +2467,23 @@ function AdminUsersScreen() {
                             onClick={() => loadUsers(page + 1)}
                             type="button"
                         >
-                            Next
+                            {t('next')}
                         </button>
                     </div>
                 </div>
 
-                <AdminModal open={createModalOpen} title="Create user account" subtitle="Assign the first login credentials" onClose={() => setCreateModalOpen(false)}>
+                <AdminModal open={createModalOpen} title={t('create_user_account')} subtitle={t('first_login_credentials')} onClose={() => setCreateModalOpen(false)}>
                     <form className="admin-modal-form" onSubmit={create}>
                     <input
                         className="input"
-                        placeholder="Name"
+                        placeholder={t('name')}
                         value={createUser.name}
                         onChange={(event) => setCreateUser((prev) => ({ ...prev, name: event.target.value }))}
                         required
                     />
                     <input
                         className="input"
-                        placeholder="Username"
+                        placeholder={t('username')}
                         value={createUser.username}
                         onChange={(event) => setCreateUser((prev) => ({ ...prev, username: event.target.value.toLowerCase() }))}
                         minLength="3"
@@ -1989,14 +2495,14 @@ function AdminUsersScreen() {
                     />
                     <input
                         className="input"
-                        placeholder="Password"
+                        placeholder={t('password')}
                         type="password"
                         value={createUser.password}
                         onChange={(event) => setCreateUser((prev) => ({ ...prev, password: event.target.value }))}
                         required
                     />
                     <button className="btn primary" type="submit">
-                        Create account
+                        {t('create_account_admin')}
                     </button>
                     </form>
                 </AdminModal>
@@ -2010,28 +2516,28 @@ function AdminUsersScreen() {
             >
                 {accountModalUser ? (
                     <div className="admin-account-actions">
-                        <div className="admin-account-balance"><span>Point balance</span><strong>{formatPoints(accountModalUser.wallet_balance)}</strong></div>
+                        <div className="admin-account-balance"><span>{t('balance_after')}</span><strong>{formatPoints(accountModalUser.wallet_balance)}</strong></div>
                         <button className="btn primary" type="button" onClick={() => {
                             setAdjustUserId(String(accountModalUser.id));
                             setAdjustAmount('');
                             setPointModalUser(accountModalUser);
                             setAccountModalUser(null);
-                        }}>Add or remove points</button>
+                        }}>{t('add_remove_points')}</button>
                         <button className="btn secondary" type="button" onClick={() => {
                             setPasswordModalUser(accountModalUser);
                             setNewPassword('');
                             setAccountModalUser(null);
-                        }}>Reset password</button>
+                        }}>{t('reset_password')}</button>
                         <button className={accountModalUser.status === 'active' ? 'btn danger' : 'btn success'} type="button" onClick={() => updateStatus(accountModalUser)}>
-                            {accountModalUser.status === 'active' ? 'Disable user' : 'Enable user'}
+                            {accountModalUser.status === 'active' ? t('disable_user') : t('enable_user')}
                         </button>
                     </div>
                 ) : null}
             </AdminModal>
             <AdminModal
                 open={!!pointModalUser}
-                title="Adjust points"
-                subtitle={pointModalUser ? `${pointModalUser.name} · ${formatPoints(pointModalUser.wallet_balance)} points` : ''}
+                title={t('adjust_points')}
+                subtitle={pointModalUser ? `${pointModalUser.name} · ${formatPoints(pointModalUser.wallet_balance)} ${t('points')}` : ''}
                 onClose={() => {
                     setPointModalUser(null);
                     setAdjustAmount('');
@@ -2040,26 +2546,26 @@ function AdminUsersScreen() {
             >
                 <div className="admin-modal-form">
                     <label>
-                        <span>Point amount</span>
+                        <span>{t('point_amount')}</span>
                         <input
                             className="input"
                             type="number"
                             inputMode="numeric"
                             value={adjustAmount}
                             onChange={(event) => setAdjustAmount(event.target.value)}
-                            placeholder="Example: 500 or -100"
+                            placeholder={t('point_example')}
                             autoFocus
                         />
-                        <small>Use a positive number to add points or a negative number to deduct them.</small>
+                        <small>{t('point_adjust_help')}</small>
                     </label>
                     <button className="btn primary" type="button" onClick={adjustPoints} disabled={adjustAmount === '' || Number(adjustAmount) === 0}>
-                        Apply point adjustment
+                        {t('apply_point_adjustment')}
                     </button>
                 </div>
             </AdminModal>
             <AdminModal
                 open={!!passwordModalUser}
-                title="Reset password"
+                title={t('reset_password')}
                 subtitle={passwordModalUser?.name || ''}
                 onClose={() => {
                     setPasswordModalUser(null);
@@ -2068,11 +2574,11 @@ function AdminUsersScreen() {
             >
                 <div className="admin-modal-form">
                     <label>
-                        <span>New password</span>
+                        <span>{t('new_password')}</span>
                         <input className="input" type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength="8" autoFocus />
-                        <small>Use at least 8 characters and share it with the user securely.</small>
+                        <small>{t('password_help')}</small>
                     </label>
-                    <button className="btn primary" type="button" onClick={resetPassword} disabled={newPassword.length < 8}>Save new password</button>
+                    <button className="btn primary" type="button" onClick={resetPassword} disabled={newPassword.length < 8}>{t('save_new_password')}</button>
                 </div>
             </AdminModal>
         </main>
@@ -2082,7 +2588,7 @@ function AdminUsersScreen() {
 function AdminUserRecordsScreen() {
     const { userId } = useParams();
     const navigate = useNavigate();
-    const { api, pushToast } = useContext(AuthContext);
+    const { api, pushToast, language, t } = useContext(AuthContext);
     const [user, setUser] = useState(null);
     const [type, setType] = useState('');
     const [from, setFrom] = useState('');
@@ -2120,7 +2626,7 @@ function AdminUserRecordsScreen() {
             setMeta(parsePaging(response));
             setPage(nextPage);
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Could not load user records', 'err');
+            pushToast(error?.response?.data?.message || t('failed_load_records'), 'err');
         } finally {
             setLoading(false);
         }
@@ -2132,7 +2638,7 @@ function AdminUserRecordsScreen() {
 
     const adjustPoints = async () => {
         if (adjustAmount === '' || Number(adjustAmount) === 0) {
-            pushToast('Enter a point amount first', 'warn');
+            pushToast(t('enter_point_amount'), 'warn');
             return;
         }
         try {
@@ -2141,16 +2647,16 @@ function AdminUserRecordsScreen() {
             });
             setAdjustAmount('');
             setPointModalOpen(false);
-            pushToast('Points adjusted', 'ok');
+            pushToast(t('points_adjusted'), 'ok');
             await load(1);
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Adjustment failed', 'err');
+            pushToast(error?.response?.data?.message || t('adjustment_failed'), 'err');
         }
     };
 
     const resetPassword = async () => {
         if (newPassword.length < 8) {
-            pushToast('Password must be at least 8 characters', 'warn');
+            pushToast(t('password_min_eight'), 'warn');
             return;
         }
         try {
@@ -2159,9 +2665,9 @@ function AdminUserRecordsScreen() {
             });
             setNewPassword('');
             setPasswordModalOpen(false);
-            pushToast('Password reset', 'ok');
+            pushToast(t('password_reset_done'), 'ok');
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Password reset failed', 'err');
+            pushToast(error?.response?.data?.message || t('password_reset_failed'), 'err');
         }
     };
 
@@ -2175,12 +2681,12 @@ function AdminUserRecordsScreen() {
                 phone: accountForm.phone || null,
             });
             setAccountModalOpen(false);
-            pushToast('User account updated', 'ok');
+            pushToast(t('user_account_updated'), 'ok');
             await load(page);
         } catch (error) {
             const validation = error?.response?.data?.errors;
             const firstError = validation ? Object.values(validation).flat()[0] : null;
-            pushToast(firstError || error?.response?.data?.message || 'Could not update user account', 'err');
+            pushToast(firstError || error?.response?.data?.message || t('user_account_update_failed'), 'err');
         }
     };
 
@@ -2189,18 +2695,18 @@ function AdminUserRecordsScreen() {
         const next = user.status === 'active' ? 'disabled' : 'active';
         try {
             await api.patch(`/admin/users/${user.id}`, { status: next });
-            pushToast(`User ${next === 'active' ? 'enabled' : 'disabled'}`, 'ok');
+            pushToast(next === 'active' ? t('user_enabled') : t('user_disabled'), 'ok');
             await load(page);
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Update failed', 'err');
+            pushToast(error?.response?.data?.message || t('update_failed'), 'err');
         }
     };
 
     return (
         <main className="app-shell admin-page">
-            <SpinnerCard title="User records">
+            <SpinnerCard title={t('user_records')}>
                 <button className="admin-back-link" type="button" onClick={() => navigate('/admin/users')}>
-                    <AppIcon name="arrow" size={16} /> Users
+                    <AppIcon name="arrow" size={16} /> {t('users')}
                 </button>
 
                 {user ? (
@@ -2210,41 +2716,42 @@ function AdminUserRecordsScreen() {
                             <strong>{user.name}</strong>
                             <small>@{user.username}</small>
                         </div>
-                        <strong>{formatPoints(user.wallet_balance)} pts</strong>
+                        <strong>{formatPoints(user.wallet_balance)} {t('points')} · {formatPoints(user.spin_balance)} {t('spins')}</strong>
                     </section>
                 ) : null}
 
                 <details className="admin-collapsible admin-record-actions spacer">
-                    <summary>Account actions</summary>
+                    <summary>{t('account_actions')}</summary>
                     <div className="admin-action-grid">
-                        <button className="btn secondary" type="button" onClick={() => setAccountModalOpen(true)}>Edit account</button>
-                        <button className="btn primary" type="button" onClick={() => setPointModalOpen(true)}>Add/remove points</button>
-                        <button className="btn secondary" type="button" onClick={() => setPasswordModalOpen(true)}>Change password</button>
+                        <button className="btn secondary" type="button" onClick={() => setAccountModalOpen(true)}>{t('edit_account')}</button>
+                        <button className="btn primary" type="button" onClick={() => setPointModalOpen(true)}>{t('add_remove_points')}</button>
+                        <button className="btn secondary" type="button" onClick={() => setPasswordModalOpen(true)}>{t('change_password')}</button>
                         <button className={user?.status === 'active' ? 'btn danger' : 'btn success'} type="button" onClick={toggleStatus}>
-                            {user?.status === 'active' ? 'Disable user' : 'Enable user'}
+                            {user?.status === 'active' ? t('disable_user') : t('enable_user')}
                         </button>
                     </div>
                 </details>
 
                 <div className="history-filters admin-record-filters spacer">
                     <select value={type} onChange={(event) => setType(event.target.value)}>
-                        <option value="">All records</option>
-                        <option value="daily_bonus">Daily Bonus</option>
-                        <option value="free_spin_reward">Free Spin</option>
-                        <option value="paid_spin_reward">Paid Spin Reward</option>
-                        <option value="spin_spend">Spin Spend</option>
-                        <option value="admin_adjustment">Admin Adjustment</option>
+                        <option value="">{t('all_records')}</option>
+                        <option value="daily_bonus">{t('tx_daily_bonus')}</option>
+                        <option value="free_spin_reward">{t('tx_free_spin_reward')}</option>
+                        <option value="paid_spin_reward">{t('tx_paid_spin_reward')}</option>
+                        <option value="spin_spend">{t('tx_spin_spend')}</option>
+                        <option value="admin_adjustment">{t('tx_admin_adjustment')}</option>
+                        <option value="spin_exchange">{t('tx_spin_exchange')}</option>
                     </select>
                     <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
                     <input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
                     <div className="history-filter-actions">
-                        <button onClick={() => load(1)} type="button">Apply filters</button>
-                        <button onClick={() => load(page)} type="button">Refresh</button>
+                        <button onClick={() => load(1)} type="button">{t('apply_filters')}</button>
+                        <button onClick={() => load(page)} type="button">{t('refresh')}</button>
                     </div>
                 </div>
 
-                {loading && <p className="subtitle">Loading records…</p>}
-                {!loading && transactions.length === 0 ? <p className="subtitle">No records yet.</p> : null}
+                {loading && <p className="subtitle">{t('loading_records')}</p>}
+                {!loading && transactions.length === 0 ? <p className="subtitle">{t('no_records')}</p> : null}
                 <ul className="history-list spacer">
                     {transactions.map((tx) => (
                         <li className="history-transaction" key={tx.id}>
@@ -2253,14 +2760,14 @@ function AdminUserRecordsScreen() {
                                     <AppIcon name={tx.type === 'spin_spend' ? 'wheel' : 'coin'} size={20} />
                                 </span>
                                 <span className="history-main-copy">
-                                    <strong>{humanizeTransactionType(tx.type)}</strong>
-                                    <small>{new Date(tx.created_at).toLocaleString()}</small>
+                                    <strong>{t(`tx_${tx.type}`) === `tx_${tx.type}` ? humanizeTransactionType(tx.type) : t(`tx_${tx.type}`)}</strong>
+                                    <small>{new Date(tx.created_at).toLocaleString(language === 'my' ? 'my-MM' : 'en-US')}</small>
                                 </span>
                                 <span className="history-value-copy">
                                     <strong className={tx.amount >= 0 ? 'credit' : 'debit'}>
-                                        {tx.amount > 0 ? '+' : ''}{formatPoints(tx.amount)} pts
+                                        {tx.amount > 0 ? '+' : ''}{formatPoints(tx.amount)} {t('points')}
                                     </strong>
-                                    <small>Balance {formatPoints(tx.balance_after)}</small>
+                                    <small>{t('balance_after')} {formatPoints(tx.balance_after)}</small>
                                 </span>
                                 <AppIcon name="arrow" size={18} />
                             </button>
@@ -2269,52 +2776,52 @@ function AdminUserRecordsScreen() {
                 </ul>
 
                 <div className="history-pagination compact-pagination">
-                    <button className="btn secondary" disabled={page <= 1} onClick={() => load(page - 1)} type="button">Prev</button>
+                    <button className="btn secondary" disabled={page <= 1} onClick={() => load(page - 1)} type="button">{t('previous')}</button>
                     <span className="toolbar-caption">{meta.current_page}/{meta.last_page}</span>
-                    <button className="btn secondary" disabled={page >= meta.last_page} onClick={() => load(page + 1)} type="button">Next</button>
+                    <button className="btn secondary" disabled={page >= meta.last_page} onClick={() => load(page + 1)} type="button">{t('next')}</button>
                 </div>
             </SpinnerCard>
 
-            <AdminModal open={pointModalOpen} title="Adjust points" subtitle={user?.name || ''} onClose={() => setPointModalOpen(false)}>
+            <AdminModal open={pointModalOpen} title={t('adjust_points')} subtitle={user?.name || ''} onClose={() => setPointModalOpen(false)}>
                 <div className="admin-modal-form">
                     <label>
-                        <span>Point amount</span>
-                        <input className="input" type="number" inputMode="numeric" value={adjustAmount} onChange={(event) => setAdjustAmount(event.target.value)} placeholder="Example: 500 or -100" autoFocus />
-                        <small>Positive adds points. Negative deducts points.</small>
+                        <span>{t('point_amount')}</span>
+                        <input className="input" type="number" inputMode="numeric" value={adjustAmount} onChange={(event) => setAdjustAmount(event.target.value)} placeholder={t('point_example')} autoFocus />
+                        <small>{t('point_adjust_help')}</small>
                     </label>
-                    <button className="btn primary" type="button" onClick={adjustPoints}>Apply point adjustment</button>
+                    <button className="btn primary" type="button" onClick={adjustPoints}>{t('apply_point_adjustment')}</button>
                 </div>
             </AdminModal>
 
-            <AdminModal open={accountModalOpen} title="Edit user account" subtitle={user?.name || ''} onClose={() => setAccountModalOpen(false)}>
+            <AdminModal open={accountModalOpen} title={t('edit_account')} subtitle={user?.name || ''} onClose={() => setAccountModalOpen(false)}>
                 <form className="admin-modal-form" onSubmit={saveAccountDetails}>
                     <label>
-                        <span>Name</span>
+                        <span>{t('name')}</span>
                         <input className="input" value={accountForm.name} onChange={(event) => setAccountForm((current) => ({ ...current, name: event.target.value }))} required autoFocus />
                     </label>
                     <label>
-                        <span>Username</span>
+                        <span>{t('username')}</span>
                         <input className="input" value={accountForm.username} onChange={(event) => setAccountForm((current) => ({ ...current, username: event.target.value.toLowerCase() }))} minLength="3" maxLength="50" pattern="[A-Za-z0-9._-]+" autoCapitalize="none" autoCorrect="off" required />
                     </label>
                     <label>
-                        <span>Email (optional)</span>
+                        <span>{t('email')} (optional)</span>
                         <input className="input" type="email" value={accountForm.email} onChange={(event) => setAccountForm((current) => ({ ...current, email: event.target.value }))} />
                     </label>
                     <label>
-                        <span>Phone number</span>
+                        <span>{t('phone')}</span>
                         <input className="input" value={accountForm.phone} onChange={(event) => setAccountForm((current) => ({ ...current, phone: event.target.value }))} />
                     </label>
-                    <button className="btn primary" type="submit">Save account</button>
+                    <button className="btn primary" type="submit">{t('save_account')}</button>
                 </form>
             </AdminModal>
 
-            <AdminModal open={passwordModalOpen} title="Change password" subtitle={user?.name || ''} onClose={() => setPasswordModalOpen(false)}>
+            <AdminModal open={passwordModalOpen} title={t('change_password')} subtitle={user?.name || ''} onClose={() => setPasswordModalOpen(false)}>
                 <div className="admin-modal-form">
                     <label>
-                        <span>New password</span>
+                        <span>{t('new_password')}</span>
                         <input className="input" type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength="8" autoFocus />
                     </label>
-                    <button className="btn primary" type="button" onClick={resetPassword} disabled={newPassword.length < 8}>Save new password</button>
+                    <button className="btn primary" type="button" onClick={resetPassword} disabled={newPassword.length < 8}>{t('save_new_password')}</button>
                 </div>
             </AdminModal>
 
@@ -2474,7 +2981,7 @@ function AdminHealthScreen() {
 }
 
 function AdminSettingsScreen() {
-    const { api, me, refreshMe, pushToast } = useContext(AuthContext);
+    const { api, me, refreshMe, pushToast, language, setLanguage, t } = useContext(AuthContext);
     const [form, setForm] = useState({ name: me?.name || '', email: me?.email || '', phone: me?.phone || '' });
     const [saving, setSaving] = useState(false);
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -2491,10 +2998,10 @@ function AdminSettingsScreen() {
         try {
             await api.patch('/admin/profile', form);
             await refreshMe();
-            pushToast('Admin account updated', 'ok');
+            pushToast(t('admin_account_updated'), 'ok');
         } catch (error) {
             const validation = error?.response?.data?.errors;
-            pushToast(validation ? Object.values(validation).flat()[0] : (error?.response?.data?.message || 'Could not update admin account'), 'err');
+            pushToast(validation ? Object.values(validation).flat()[0] : (error?.response?.data?.message || t('admin_account_update_failed')), 'err');
         } finally {
             setSaving(false);
         }
@@ -2511,10 +3018,10 @@ function AdminSettingsScreen() {
             });
             setPasswordForm({ currentPassword: '', password: '', confirmation: '' });
             setPasswordModalOpen(false);
-            pushToast('Admin password changed', 'ok');
+            pushToast(t('admin_password_changed'), 'ok');
         } catch (error) {
             const validation = error?.response?.data?.errors;
-            pushToast(validation ? Object.values(validation).flat()[0] : (error?.response?.data?.message || 'Could not change password'), 'err');
+            pushToast(validation ? Object.values(validation).flat()[0] : (error?.response?.data?.message || t('password_change_failed')), 'err');
         } finally {
             setChangingPassword(false);
         }
@@ -2522,46 +3029,53 @@ function AdminSettingsScreen() {
 
     return (
         <main className="app-shell admin-page">
-            <SpinnerCard title="Admin — Settings">
+            <SpinnerCard title={t('admin_settings')}>
                 <section className="admin-profile-summary">
                     <div className="admin-profile-avatar"><AppIcon name="user" size={25} /></div>
-                    <span><strong>{me?.name}</strong><small>Sole administrator · active</small></span>
+                    <span><strong>{me?.name}</strong><small>{t('sole_admin_active')}</small></span>
                 </section>
                 <form className="admin-modal-form spacer" onSubmit={save}>
-                    <label><span>Name</span><input className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required /></label>
-                    <label><span>Email</span><input className="input" type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} required /></label>
-                    <label><span>Phone</span><input className="input" type="tel" value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} /></label>
-                    <button className="btn primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save account information'}</button>
+                    <label><span>{t('name')}</span><input className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required /></label>
+                    <label><span>{t('email')}</span><input className="input" type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} required /></label>
+                    <label><span>{t('phone')}</span><input className="input" type="tel" value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} /></label>
+                    <button className="btn primary" type="submit" disabled={saving}>{saving ? t('saving') : t('save_account_information')}</button>
                 </form>
+                <section className="admin-language-section spacer">
+                    <strong>{t('language')}</strong>
+                    <div className="language-picker" role="group" aria-label={t('language')}>
+                        <button type="button" className={language === 'en' ? 'active' : ''} onClick={() => setLanguage('en')}>{t('english')}</button>
+                        <button type="button" className={language === 'my' ? 'active' : ''} onClick={() => setLanguage('my')}>{t('burmese')}</button>
+                    </div>
+                </section>
                 <nav className="admin-function-grid spacer">
                     <NavLink className="admin-function-link" to="/admin/app-settings">
-                        <AppIcon name="settings" size={21} /><span><strong>App content settings</strong><small>Home text, contacts and social links</small></span><AppIcon name="arrow" size={17} />
+                        <AppIcon name="settings" size={21} /><span><strong>{t('app_content_settings')}</strong><small>{t('home_contacts_social')}</small></span><AppIcon name="arrow" size={17} />
                     </NavLink>
                     <button type="button" onClick={() => setPasswordModalOpen(true)}>
-                        <AppIcon name="lock" size={21} /><span><strong>Change password</strong><small>Verify the current password first</small></span><AppIcon name="arrow" size={17} />
+                        <AppIcon name="lock" size={21} /><span><strong>{t('change_password')}</strong><small>{t('verify_current_password')}</small></span><AppIcon name="arrow" size={17} />
                     </button>
                 </nav>
             </SpinnerCard>
             <AdminModal
                 open={passwordModalOpen}
-                title="Change admin password"
-                subtitle="Use at least 8 characters"
+                title={t('change_admin_password')}
+                subtitle={t('use_eight_characters')}
                 onClose={() => setPasswordModalOpen(false)}
             >
                 <form className="admin-modal-form" onSubmit={changePassword}>
                     <label>
-                        <span>Current password</span>
+                        <span>{t('current_password')}</span>
                         <input className="input" type="password" autoComplete="current-password" value={passwordForm.currentPassword} onChange={(event) => setPasswordForm((current) => ({ ...current, currentPassword: event.target.value }))} required />
                     </label>
                     <label>
-                        <span>New password</span>
+                        <span>{t('new_password')}</span>
                         <input className="input" type="password" autoComplete="new-password" minLength="8" value={passwordForm.password} onChange={(event) => setPasswordForm((current) => ({ ...current, password: event.target.value }))} required />
                     </label>
                     <label>
-                        <span>Confirm new password</span>
+                        <span>{t('confirm_password')}</span>
                         <input className="input" type="password" autoComplete="new-password" minLength="8" value={passwordForm.confirmation} onChange={(event) => setPasswordForm((current) => ({ ...current, confirmation: event.target.value }))} required />
                     </label>
-                    <button className="btn primary" type="submit" disabled={changingPassword}>{changingPassword ? 'Changing…' : 'Change password'}</button>
+                    <button className="btn primary" type="submit" disabled={changingPassword}>{changingPassword ? t('changing') : t('change_password')}</button>
                 </form>
             </AdminModal>
         </main>
@@ -2569,7 +3083,7 @@ function AdminSettingsScreen() {
 }
 
 function AdminApplicationSettingsScreen() {
-    const { api, refreshAppSettings, pushToast } = useContext(AuthContext);
+    const { api, refreshAppSettings, pushToast, t } = useContext(AuthContext);
     const [form, setForm] = useState(DEFAULT_APP_SETTINGS);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -2580,7 +3094,7 @@ function AdminApplicationSettingsScreen() {
                 const response = await api.get('/app-settings');
                 setForm({ ...DEFAULT_APP_SETTINGS, ...(response.data.settings || {}) });
             } catch (error) {
-                pushToast(error?.response?.data?.message || 'Could not load app settings', 'err');
+                pushToast(error?.response?.data?.message || t('app_settings_load_failed'), 'err');
             } finally {
                 setLoading(false);
             }
@@ -2589,6 +3103,14 @@ function AdminApplicationSettingsScreen() {
     }, [api, pushToast]);
 
     const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+
+    const updateDailyBonusDay = (index, value) => {
+        setForm((current) => {
+            const schedule = normalizeDailyBonusSchedule(current, false);
+            schedule[index] = value;
+            return { ...current, daily_bonus_schedule: schedule };
+        });
+    };
 
     const save = async (event) => {
         event.preventDefault();
@@ -2599,68 +3121,81 @@ function AdminApplicationSettingsScreen() {
             );
             payload.play_bet_url = form.play_bet_url;
             payload.play_bet_label = form.play_bet_label;
-            payload.daily_bonus_points = Math.max(0, Number(form.daily_bonus_points) || 0);
+            payload.daily_bonus_schedule = normalizeDailyBonusSchedule(form);
+            // Retained for compatibility with installations upgrading from the old single-value setting.
+            payload.daily_bonus_points = payload.daily_bonus_schedule[0];
             payload.contact_phone = splitSettingLines(form.contact_phone_numbers)[0] || null;
             const response = await api.patch('/admin/app-settings', payload);
             setForm({ ...DEFAULT_APP_SETTINGS, ...(response.data.settings || {}) });
             await refreshAppSettings();
-            pushToast('App links and content updated', 'ok');
+            pushToast(t('app_content_updated'), 'ok');
         } catch (error) {
             const validation = error?.response?.data?.errors;
             const firstError = validation ? Object.values(validation).flat()[0] : null;
-            pushToast(firstError || error?.response?.data?.message || 'Could not save app settings', 'err');
+            pushToast(firstError || error?.response?.data?.message || t('app_settings_save_failed'), 'err');
         } finally {
             setSaving(false);
         }
     };
 
     const contactFields = [
-        ['play_bet_url', 'Play Bet URL', 'url'],
-        ['play_bet_label', 'Play Bet display text', 'text'],
-        ['telegram_contact_url', 'Telegram account creation / contact URL', 'text'],
-        ['viber_contact_url', 'Viber exchange/contact URL', 'text'],
+        ['play_bet_url', t('play_bet_url'), 'url'],
+        ['play_bet_label', t('play_bet_text'), 'text'],
+        ['telegram_contact_url', t('telegram_account_url'), 'text'],
+        ['viber_contact_url', t('viber_contact_url'), 'text'],
     ];
     const socialFields = [
-        ['telegram_channel_url', 'Telegram channel URL', 'url'],
-        ['facebook_page_url', 'Facebook page URL', 'url'],
-        ['tiktok_channel_url', 'TikTok channel URL', 'url'],
+        ['telegram_channel_url', t('telegram_channel_url'), 'url'],
+        ['facebook_page_url', t('facebook_page_url'), 'url'],
+        ['tiktok_channel_url', t('tiktok_channel_url'), 'url'],
     ];
 
     return (
         <main className="app-shell admin-page">
-            <SpinnerCard title="Admin — App Links & Content">
-                <p className="subtitle">These changes appear in the user app immediately; no rebuild is required.</p>
-                {loading ? <p className="subtitle spacer">Loading…</p> : (
+            <SpinnerCard title={t('admin_app_content')}>
+                <p className="subtitle">{t('app_changes_immediate')}</p>
+                {loading ? <p className="subtitle spacer">{t('loading')}</p> : (
                     <form className="admin-settings-form spacer" onSubmit={save}>
                         <details className="admin-collapsible">
-                            <summary>Betting & contact links</summary>
+                            <summary>{t('betting_contact_links')}</summary>
                             <div className="admin-compact-form">
                                 {contactFields.map(([key, label, type]) => (
                                     <label key={key}><span>{label}</span><input className="input" type={type} value={form[key] || ''} onChange={(event) => update(key, event.target.value)} required={key === 'play_bet_url' || key === 'play_bet_label'} /></label>
                                 ))}
-                                <label><span>Contact phone numbers — one per line</span><textarea className="input" rows="4" value={form.contact_phone_numbers || ''} onChange={(event) => update('contact_phone_numbers', event.target.value)} /></label>
+                                <label><span>{t('contact_phones_lines')}</span><textarea className="input" rows="4" value={form.contact_phone_numbers || ''} onChange={(event) => update('contact_phone_numbers', event.target.value)} /></label>
                             </div>
                         </details>
                         <details className="admin-collapsible">
-                            <summary>Home screen content</summary>
+                            <summary>{t('home_screen_content')}</summary>
                             <div className="admin-compact-form">
-                                <label><span>Information board — one item per line</span><textarea className="input" rows="6" value={form.home_board_text || ''} onChange={(event) => update('home_board_text', event.target.value)} /></label>
-                                <label><span>Auto-scrolling text</span><textarea className="input" rows="3" value={form.home_ticker_text || ''} onChange={(event) => update('home_ticker_text', event.target.value)} /></label>
-                                <label><span>Daily claim points</span><input className="input" type="number" inputMode="numeric" min="0" value={form.daily_bonus_points ?? 20} onChange={(event) => update('daily_bonus_points', event.target.value)} /></label>
+                                <label><span>{t('information_board_lines')}</span><textarea className="input" rows="6" value={form.home_board_text || ''} onChange={(event) => update('home_board_text', event.target.value)} /></label>
+                                <label><span>{t('auto_scrolling_text')}</span><textarea className="input" rows="3" value={form.home_ticker_text || ''} onChange={(event) => update('home_ticker_text', event.target.value)} /></label>
+                                <fieldset className="daily-schedule-fieldset">
+                                    <legend>{t('daily_points_schedule')}</legend>
+                                    <p>{t('weekly_schedule_help')}</p>
+                                    <div className="admin-daily-schedule-grid">
+                                        {normalizeDailyBonusSchedule(form, false).map((points, index) => (
+                                            <label key={DAILY_BONUS_WEEKDAYS[index]}>
+                                                <span>{t('day')} {index + 1} · {t(DAILY_BONUS_WEEKDAYS[index])}</span>
+                                                <input className="input" type="number" inputMode="numeric" min="0" max="1000000" value={points} onChange={(event) => updateDailyBonusDay(index, event.target.value)} />
+                                            </label>
+                                        ))}
+                                    </div>
+                                </fieldset>
                             </div>
                         </details>
                         <details className="admin-collapsible">
-                            <summary>Social links & About</summary>
+                            <summary>{t('social_links_about')}</summary>
                             <div className="admin-compact-form">
                                 {socialFields.map(([key, label, type]) => (
                                     <label key={key}><span>{label}</span><input className="input" type={type} value={form[key] || ''} onChange={(event) => update(key, event.target.value)} /></label>
                                 ))}
-                                <label><span>Buy points instructions</span><textarea className="input" rows="5" value={form.buy_points_instructions || ''} onChange={(event) => update('buy_points_instructions', event.target.value)} /></label>
-                                <label><span>About this app</span><textarea className="input" rows="4" value={form.about_content || ''} onChange={(event) => update('about_content', event.target.value)} /></label>
+                                <label><span>{t('terms_content')}</span><textarea className="input" rows="10" value={form.how_to_use_terms || ''} onChange={(event) => update('how_to_use_terms', event.target.value)} /></label>
+                                <label><span>{t('about_app')}</span><textarea className="input" rows="4" value={form.about_content || ''} onChange={(event) => update('about_content', event.target.value)} /></label>
                             </div>
                         </details>
                         <button className="btn primary" type="submit" disabled={saving}>
-                            {saving ? 'Saving…' : 'Save App Settings'}
+                            {saving ? t('saving') : t('save_app_settings')}
                         </button>
                     </form>
                 )}
@@ -2670,18 +3205,23 @@ function AdminApplicationSettingsScreen() {
 }
 
 function AdminSpinConfigScreen() {
-    const { api, pushToast } = useContext(AuthContext);
+    const { api, pushToast, t } = useContext(AuthContext);
     const [editing, setEditing] = useState(null);
     const [loading, setLoading] = useState(false);
     const [editorModal, setEditorModal] = useState(null);
+    const [exchangePackages, setExchangePackages] = useState([]);
 
     const loadConfig = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/admin/spin-configuration');
+            const [response, packageResponse] = await Promise.all([
+                api.get('/admin/spin-configuration'),
+                api.get('/admin/spin-exchange-packages'),
+            ]);
             setEditing(response.data.configuration);
+            setExchangePackages(packageResponse.data.packages || []);
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Could not load wheel settings', 'err');
+            pushToast(error?.response?.data?.message || t('wheel_settings_load_failed'), 'err');
         } finally {
             setLoading(false);
         }
@@ -2696,10 +3236,10 @@ function AdminSpinConfigScreen() {
             return;
         }
         const payload = {
-            cost_points: Number(editing.cost_points),
             segments: (editing.segments || []).map((segment) => ({
                 id: segment.id || null,
-                points_reward: Number(segment.points_reward),
+                reward_type: segment.reward_type || 'points',
+                reward_amount: Number(segment.reward_type === 'spins' ? segment.spins_reward : segment.points_reward),
                 weight: Number(segment.weight),
             })),
         };
@@ -2707,10 +3247,10 @@ function AdminSpinConfigScreen() {
         try {
             const response = await api.patch('/admin/spin-configuration', payload);
             setEditing(response.data.configuration);
-            pushToast('Wheel settings saved', 'ok');
+            pushToast(t('wheel_settings_saved'), 'ok');
             setEditorModal(null);
         } catch (error) {
-            pushToast(error?.response?.data?.message || 'Save failed', 'err');
+            pushToast(error?.response?.data?.message || t('save_failed'), 'err');
         }
     };
 
@@ -2726,6 +3266,8 @@ function AdminSpinConfigScreen() {
             color: palette[segments.length % palette.length],
             text_color: '#ffffff',
             points_reward: 10,
+            reward_type: 'points',
+            spins_reward: 0,
             weight: 10,
             max_win_per_day: null,
         });
@@ -2744,70 +3286,61 @@ function AdminSpinConfigScreen() {
         syncSegments(segments);
     };
 
-    const loadingMessage = loading ? 'Loading…' : '';
+    const addExchangePackage = () => setExchangePackages((current) => [...current, {
+        id: null,
+        points_cost: 100,
+        spins_amount: 3,
+        is_active: true,
+    }]);
+
+    const updateExchangePackage = (index, key, value) => setExchangePackages((current) => current.map((item, itemIndex) => (
+        itemIndex === index ? { ...item, [key]: value } : item
+    )));
+
+    const saveExchangePackages = async () => {
+        try {
+            const response = await api.put('/admin/spin-exchange-packages', {
+                packages: exchangePackages.map((item) => ({
+                    id: item.id || null,
+                    points_cost: Number(item.points_cost),
+                    spins_amount: Number(item.spins_amount),
+                    is_active: Boolean(item.is_active),
+                })),
+            });
+            setExchangePackages(response.data.packages || []);
+            setEditorModal(null);
+            pushToast(t('save_app_settings'), 'ok');
+        } catch (error) {
+            pushToast(error?.response?.data?.message || t('save_failed'), 'err');
+        }
+    };
+
+    const loadingMessage = loading ? t('loading') : '';
     const totalWeight = (editing?.segments || []).reduce((sum, segment) => sum + Number(segment.weight || 0), 0);
-    const expectedPayout = totalWeight > 0
-        ? (editing.segments || []).reduce((sum, segment) => sum + (Number(segment.points_reward || 0) * Number(segment.weight || 0)), 0) / totalWeight
-        : 0;
-    const expectedMargin = Number(editing?.cost_points || 0) - expectedPayout;
 
     return (
         <main className="app-shell admin-page">
-            <SpinnerCard title="Admin — Lucky Draw Wheel">
+            <SpinnerCard title={t('admin_wheel')}>
                 {loading && <p className="subtitle">{loadingMessage}</p>}
-                <div className={`wheel-profit-card ${expectedMargin < 0 ? 'risk' : 'safe'}`}>
-                    <span>Expected average per spin</span>
-                    <strong>{expectedPayout.toFixed(2)} pts</strong>
-                    <small>Paid cost {formatPoints(editing?.cost_points)} pts · expected margin {expectedMargin.toFixed(2)} pts</small>
-                </div>
                 <div className="admin-function-grid spacer">
-                    <button type="button" onClick={() => setEditorModal('settings')}>
-                        <AppIcon name="settings" size={21} />
-                        <span><strong>Paid spin cost</strong><small>{formatPoints(editing?.cost_points)} points per spin</small></span>
-                        <AppIcon name="arrow" size={17} />
-                    </button>
                     <button type="button" onClick={() => setEditorModal('segments')} disabled={!editing}>
                         <AppIcon name="wheel" size={21} />
-                        <span><strong>Slices, rewards & chances</strong><small>{(editing?.segments || []).length} slices</small></span>
+                        <span><strong>{t('slices_rewards_chances')}</strong><small>{(editing?.segments || []).length} {t('slices')}</small></span>
+                        <AppIcon name="arrow" size={17} />
+                    </button>
+                    <button type="button" onClick={() => setEditorModal('packages')}>
+                        <AppIcon name="coin" size={21} />
+                        <span><strong>{t('spin_packages')}</strong><small>{t('manage_spin_packages')}</small></span>
                         <AppIcon name="arrow" size={17} />
                     </button>
                 </div>
             </SpinnerCard>
 
-            <AdminModal
-                open={editorModal === 'settings'}
-                title="Paid spin cost"
-                subtitle="The points deducted for every paid spin"
-                onClose={() => setEditorModal(null)}
-            >
-                <div className="admin-modal-form">
-                    <label>
-                        <span>Points required for one paid spin</span>
-                        <input
-                            className="input"
-                            value={editing?.cost_points ?? ''}
-                            onChange={(event) => setEditing((prev) => ({ ...prev, cost_points: event.target.value }))}
-                            type="number"
-                            inputMode="numeric"
-                            min="0"
-                            autoFocus
-                        />
-                    </label>
-                    <div className={`wheel-margin-note ${expectedMargin < 0 ? 'risk' : 'safe'}`}>
-                        Expected reward: {expectedPayout.toFixed(2)} points<br />
-                        Expected margin: {expectedMargin.toFixed(2)} points per paid spin
-                    </div>
-                    <button className="btn primary" type="button" onClick={save}>
-                        Save paid spin cost
-                    </button>
-                </div>
-            </AdminModal>
-
                 {editing ? (
                     <AdminModal
                         open={editorModal === 'segments'}
-                        title="Slices, rewards & chances"
-                        subtitle={`${(editing.segments || []).length} wheel slices`}
+                        title={t('slices_rewards_chances')}
+                        subtitle={`${(editing.segments || []).length} ${t('wheel_slices')}`}
                         onClose={() => setEditorModal(null)}
                         wide
                     >
@@ -2816,23 +3349,34 @@ function AdminSpinConfigScreen() {
                             <details className="segment-block" key={`${segment.id || index}`}>
                                 <summary>
                                     <i style={{ background: segment.color || '#ffca28' }} />
-                                    <span>Slice {index + 1}</span>
-                                    <strong>{formatPoints(segment.points_reward)} pts · {totalWeight ? ((Number(segment.weight || 0) / totalWeight) * 100).toFixed(1) : '0.0'}%</strong>
+                                    <span>{t('slice')} {index + 1}</span>
+                                    <strong>
+                                        {formatPoints(segment.reward_type === 'spins' ? segment.spins_reward : segment.points_reward)}{' '}
+                                        {segment.reward_type === 'spins' ? t('spins') : t('points')} ·{' '}
+                                        {totalWeight ? ((Number(segment.weight || 0) / totalWeight) * 100).toFixed(1) : '0.0'}%
+                                    </strong>
                                 </summary>
                                 <div className="segment-editor-fields">
                                     <label>
-                                        <span>Reward points</span>
+                                        <span>{t('reward_type')}</span>
+                                        <select className="input" value={segment.reward_type || 'points'} onChange={(event) => updateSegment(index, 'reward_type', event.target.value)}>
+                                            <option value="points">{t('points_reward_type')}</option>
+                                            <option value="spins">{t('spins_reward_type')}</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>{t('reward_amount')}</span>
                                         <input
                                             className="input"
-                                            value={segment.points_reward ?? ''}
+                                            value={segment.reward_type === 'spins' ? (segment.spins_reward ?? '') : (segment.points_reward ?? '')}
                                             type="number"
                                             inputMode="numeric"
                                             min="0"
-                                            onChange={(event) => updateSegment(index, 'points_reward', event.target.value)}
+                                            onChange={(event) => updateSegment(index, segment.reward_type === 'spins' ? 'spins_reward' : 'points_reward', event.target.value)}
                                         />
                                     </label>
                                     <label>
-                                        <span>Chance weight</span>
+                                        <span>{t('chance_weight')}</span>
                                         <input
                                             className="input"
                                             value={segment.weight ?? ''}
@@ -2841,23 +3385,37 @@ function AdminSpinConfigScreen() {
                                             min="1"
                                             onChange={(event) => updateSegment(index, 'weight', event.target.value)}
                                         />
-                                        <small>Current chance: {totalWeight ? ((Number(segment.weight || 0) / totalWeight) * 100).toFixed(2) : '0.00'}%</small>
+                                        <small>{t('current_chance')}: {totalWeight ? ((Number(segment.weight || 0) / totalWeight) * 100).toFixed(2) : '0.00'}%</small>
                                     </label>
                                 <button className="btn danger" type="button" onClick={() => removeSegment(index)} disabled={(editing.segments || []).length <= 2}>
-                                    Remove slice
+                                    {t('remove_slice')}
                                 </button>
                                 </div>
                             </details>
                         ))}
                         <button className="btn secondary" type="button" onClick={addSegment}>
-                            Add slice
+                            {t('add_slice')}
                         </button>
                         <button className="btn primary" type="button" onClick={save}>
-                            Save slices and chances
+                            {t('save_slices')}
                         </button>
                         </div>
                     </AdminModal>
                 ) : null}
+            <AdminModal open={editorModal === 'packages'} title={t('spin_packages')} subtitle={t('manage_spin_packages')} onClose={() => setEditorModal(null)} wide>
+                <div className="admin-segment-list">
+                    {exchangePackages.map((item, index) => (
+                        <div className="segment-block exchange-package-editor" key={item.id || `new-${index}`}>
+                            <label><span>{t('point_cost')}</span><input className="input" type="number" min="1" value={item.points_cost} onChange={(event) => updateExchangePackage(index, 'points_cost', event.target.value)} /></label>
+                            <label><span>{t('spin_quantity')}</span><input className="input" type="number" min="1" value={item.spins_amount} onChange={(event) => updateExchangePackage(index, 'spins_amount', event.target.value)} /></label>
+                            <label className="remember-row"><input type="checkbox" checked={Boolean(item.is_active)} onChange={(event) => updateExchangePackage(index, 'is_active', event.target.checked)} /><span>{t('active')}</span></label>
+                            <button className="btn danger" type="button" disabled={exchangePackages.length <= 1} onClick={() => setExchangePackages((current) => current.filter((_, itemIndex) => itemIndex !== index))}>{t('remove_package')}</button>
+                        </div>
+                    ))}
+                    <button className="btn secondary" type="button" onClick={addExchangePackage}>{t('add_package')}</button>
+                    <button className="btn primary" type="button" onClick={saveExchangePackages}>{t('save_packages')}</button>
+                </div>
+            </AdminModal>
         </main>
     );
 }

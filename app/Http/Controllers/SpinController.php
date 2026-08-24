@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SpinEvent;
 use App\Services\IdempotencyService;
+use App\Services\SpinCreditService;
 use App\Services\SpinEligibilityService;
 use App\Services\SpinService;
 use App\Services\WalletService;
@@ -17,6 +18,7 @@ class SpinController extends Controller
         private readonly SpinService $spinService,
         private readonly SpinEligibilityService $spinEligibilityService,
         private readonly WalletService $walletService,
+        private readonly SpinCreditService $spinCreditService,
         private readonly IdempotencyService $idempotencyService,
     ) {}
 
@@ -70,12 +72,17 @@ class SpinController extends Controller
                         'event_id' => $event->id,
                         'points_spent' => $event->points_spent,
                         'points_awarded' => $event->points_awarded,
+                        'spins_spent' => $event->spins_spent,
+                        'spins_awarded' => $event->spins_awarded,
+                        'reward_type' => $event->result_payload['reward_type'] ?? 'points',
+                        'reward_amount' => $event->result_payload['reward_amount'] ?? $event->points_awarded,
                         'is_free_spin' => $event->is_free_spin,
                         'segment' => $event->segment?->label,
                         'segment_id' => $event->spin_segment_id,
                         'segment_order' => $this->resolveSegmentOrder($event),
                         'seed' => $event->random_seed,
                         'balance_after' => $event->result_payload['balance_after'] ?? null,
+                        'spin_balance_after' => $event->result_payload['spin_balance_after'] ?? null,
                     ],
                     'wallet' => $request->user()->wallet?->refresh()?->only(['balance']),
                 ],
@@ -96,13 +103,14 @@ class SpinController extends Controller
                 ];
             }
 
-            if (! $this->walletService->canDebit($request->user(), $config->cost_points)) {
+            $spinWallet = $this->spinCreditService->getOrCreateWallet($request->user());
+            if ($spinWallet->balance < 1) {
                 return [
                     'data' => [
-                        'message' => 'Insufficient balance',
-                        'error_code' => 'INSUFFICIENT_BALANCE',
-                        'required_points' => $config->cost_points,
-                        'balance' => $this->walletService->getOrCreateWallet($request->user())->balance,
+                        'message' => 'Insufficient spins',
+                        'error_code' => 'INSUFFICIENT_SPINS',
+                        'required_spins' => 1,
+                        'spin_balance' => $spinWallet->balance,
                     ],
                     'status' => 422,
                 ];
@@ -123,13 +131,13 @@ class SpinController extends Controller
                     ];
                 }
 
-                if ($e->getMessage() === 'Insufficient balance') {
+                if ($e->getMessage() === 'Insufficient spins') {
                     return [
                         'data' => [
                             'message' => $e->getMessage(),
-                            'error_code' => 'INSUFFICIENT_BALANCE',
-                            'required_points' => $config->cost_points,
-                            'balance' => $this->walletService->getOrCreateWallet($request->user())->balance,
+                            'error_code' => 'INSUFFICIENT_SPINS',
+                            'required_spins' => 1,
+                            'spin_balance' => $this->spinCreditService->getOrCreateWallet($request->user())->balance,
                         ],
                         'status' => 422,
                     ];
@@ -148,12 +156,17 @@ class SpinController extends Controller
                         'event_id' => $event->id,
                         'points_spent' => $event->points_spent,
                         'points_awarded' => $event->points_awarded,
+                        'spins_spent' => $event->spins_spent,
+                        'spins_awarded' => $event->spins_awarded,
+                        'reward_type' => $event->result_payload['reward_type'] ?? 'points',
+                        'reward_amount' => $event->result_payload['reward_amount'] ?? $event->points_awarded,
                         'is_free_spin' => $event->is_free_spin,
                         'segment' => $event->segment?->label,
                         'segment_id' => $event->spin_segment_id,
                         'segment_order' => $this->resolveSegmentOrder($event),
                         'seed' => $event->random_seed,
                         'balance_after' => $event->result_payload['balance_after'] ?? null,
+                        'spin_balance_after' => $event->result_payload['spin_balance_after'] ?? null,
                     ],
                     'wallet' => $request->user()->wallet?->refresh()?->only(['balance']),
                 ],

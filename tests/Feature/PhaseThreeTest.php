@@ -7,6 +7,7 @@ use App\Models\RequestIdempotencyKey;
 use App\Models\SpinConfiguration;
 use App\Models\SpinEvent;
 use App\Models\SpinSegment;
+use App\Models\SpinWallet;
 use App\Models\User;
 use App\Services\IdempotencyService;
 use App\Services\SpinEligibilityService;
@@ -161,6 +162,7 @@ class PhaseThreeTest extends TestCase
     {
         $user = $this->createBasicUser();
         $this->seedWallet($user, 50);
+        SpinWallet::query()->create(['user_id' => $user->id, 'balance' => 2]);
         $this->createSpinConfiguration([
             'name' => 'Cooldown Boundary Wheel',
             'cost_points' => 10,

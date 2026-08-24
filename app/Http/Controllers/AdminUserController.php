@@ -6,6 +6,7 @@ use App\Models\PointTransaction;
 use App\Models\User;
 use App\Services\AdminAuditService;
 use App\Services\SessionSecurityService;
+use App\Services\SpinCreditService;
 use App\Services\WalletService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +21,7 @@ class AdminUserController extends Controller
         private readonly WalletService $walletService,
         private readonly AdminAuditService $auditService,
         private readonly SessionSecurityService $sessionSecurityService,
+        private readonly SpinCreditService $spinCreditService,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -38,7 +40,7 @@ class AdminUserController extends Controller
 
         $query = User::query()
             ->where('role', 'user')
-            ->with('wallet:id,user_id,balance')
+            ->with(['wallet:id,user_id,balance', 'spinWallet:id,user_id,balance'])
             ->orderByDesc('id');
 
         if ($q !== '') {
@@ -65,6 +67,7 @@ class AdminUserController extends Controller
             'role' => $user->role,
             'status' => $user->status,
             'wallet_balance' => $user->wallet?->balance ?? 0,
+            'spin_balance' => $user->spinWallet?->balance ?? 0,
             'created_at' => optional($user->created_at)->toISOString(),
         ])->items();
 
@@ -98,6 +101,7 @@ class AdminUserController extends Controller
         $perPage = min(100, max(5, (int) $request->query('per_page', 20)));
 
         $wallet = $this->walletService->getOrCreateWallet($user);
+        $spinWallet = $this->spinCreditService->getOrCreateWallet($user);
         $query = $user->pointTransactions();
 
         if ($type) {
@@ -127,6 +131,7 @@ class AdminUserController extends Controller
                 'role' => $user->role,
                 'status' => $user->status,
                 'wallet_balance' => $wallet->balance,
+                'spin_balance' => $spinWallet->balance,
                 'created_at' => optional($user->created_at)->toISOString(),
             ],
             'transactions' => $transactions->items(),

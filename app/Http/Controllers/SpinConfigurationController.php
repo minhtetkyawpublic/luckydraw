@@ -29,10 +29,12 @@ class SpinConfigurationController extends Controller
     {
         $configuration = $this->singleConfiguration();
         $data = $request->validate([
-            'cost_points' => 'required|integer|min:0|max:1000000000',
+            'cost_points' => 'nullable|integer|min:0|max:1000000000',
             'segments' => 'required|array|min:2|max:24',
             'segments.*.id' => 'nullable|integer|distinct',
-            'segments.*.points_reward' => 'required|integer|min:0|max:1000000000',
+            'segments.*.reward_type' => 'nullable|in:points,spins',
+            'segments.*.reward_amount' => 'nullable|integer|min:1|max:1000000000',
+            'segments.*.points_reward' => 'nullable|integer|min:1|max:1000000000',
             'segments.*.weight' => 'required|integer|min:1|max:1000000',
         ]);
 
@@ -41,7 +43,7 @@ class SpinConfigurationController extends Controller
             $configuration->update([
                 'name' => 'Lucky Draw Wheel',
                 'center_label' => 'LUCKY',
-                'cost_points' => $data['cost_points'],
+                'cost_points' => 0,
                 'cooldown_seconds' => 0,
                 'is_active' => true,
                 'starts_at' => null,
@@ -66,12 +68,22 @@ class SpinConfigurationController extends Controller
                     }
                 }
 
+                $rewardType = $segmentData['reward_type'] ?? 'points';
+                $rewardAmount = (int) ($segmentData['reward_amount'] ?? $segmentData['points_reward'] ?? 0);
+                if ($rewardAmount < 1) {
+                    throw ValidationException::withMessages([
+                        "segments.{$index}.reward_amount" => 'Each slice must have a reward amount of at least one.',
+                    ]);
+                }
+
                 $values = [
                     'label' => 'Slice '.($index + 1),
                     'color' => $segment?->color ?: $palette[$index % count($palette)],
                     'text_color' => $segment?->text_color ?: '#ffffff',
                     'is_active' => true,
-                    'points_reward' => $segmentData['points_reward'],
+                    'reward_type' => $rewardType,
+                    'points_reward' => $rewardType === 'points' ? $rewardAmount : 0,
+                    'spins_reward' => $rewardType === 'spins' ? $rewardAmount : 0,
                     'weight' => $segmentData['weight'],
                     'max_win_per_day' => null,
                 ];
@@ -97,7 +109,7 @@ class SpinConfigurationController extends Controller
             'subject_type' => SpinConfiguration::class,
             'subject_id' => $configuration->id,
             'metadata' => [
-                'cost_points' => $data['cost_points'],
+                'cost_points' => 0,
                 'slice_count' => count($data['segments']),
                 'segments' => $data['segments'],
             ],
@@ -123,7 +135,7 @@ class SpinConfigurationController extends Controller
             $configuration = SpinConfiguration::query()->create([
                 'name' => 'Lucky Draw Wheel',
                 'center_label' => 'LUCKY',
-                'cost_points' => 10,
+                'cost_points' => 0,
                 'cooldown_seconds' => 0,
                 'is_active' => true,
             ]);
@@ -135,6 +147,8 @@ class SpinConfigurationController extends Controller
                     'text_color' => '#ffffff',
                     'is_active' => true,
                     'points_reward' => $points,
+                    'reward_type' => 'points',
+                    'spins_reward' => 0,
                     'weight' => [45, 30, 20, 5][$index],
                 ]);
             }

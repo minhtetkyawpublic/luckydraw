@@ -5,7 +5,10 @@ namespace Tests\Feature;
 use App\Models\PointsWallet;
 use App\Models\PointTransaction;
 use App\Models\SpinConfiguration;
+use App\Models\SpinCreditTransaction;
+use App\Models\SpinExchangePackage;
 use App\Models\SpinSegment;
+use App\Models\SpinWallet;
 use App\Models\User;
 use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,10 +39,17 @@ class PhaseTwoTest extends TestCase
         $initial->assertJsonPath('status.wallet_balance', 0);
         $initial->assertJsonStructure([
             'status' => [
-                'config' => ['id', 'name', 'cost_points', 'cooldown_seconds', 'is_active'],
+                'config' => ['id', 'name', 'cooldown_seconds', 'is_active'],
                 'segments' => [['id', 'label', 'points_reward', 'weight']],
                 'can_free_spin_today',
                 'can_claim_daily_bonus',
+                'daily_bonus_week' => [[
+                    'day',
+                    'weekday',
+                    'date',
+                    'points',
+                    'status',
+                ]],
                 'next_paid_spin_at',
                 'paid_spin_cooldown_remaining_seconds',
             ],
@@ -64,6 +74,7 @@ class PhaseTwoTest extends TestCase
             ],
         ]);
         $this->seedWallet($user, 40);
+        $this->seedSpins($user, 2);
         $this->loginAs($user);
 
         $this->postJson('/api/spins')->assertOk();
@@ -102,13 +113,13 @@ class PhaseTwoTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('configuration.name', 'Lucky Draw Wheel')
-            ->assertJsonPath('configuration.cost_points', 15)
+            ->assertJsonPath('configuration.cost_points', 0)
             ->assertJsonPath('configuration.is_active', true)
             ->assertJsonPath('configuration.cooldown_seconds', 0)
             ->assertJsonCount(2, 'configuration.segments');
 
         $this->assertDatabaseCount('spin_configurations', 2);
-        $this->assertDatabaseHas('spin_configurations', ['id' => $firstConfig->id, 'is_active' => true, 'cost_points' => 15]);
+        $this->assertDatabaseHas('spin_configurations', ['id' => $firstConfig->id, 'is_active' => true, 'cost_points' => 0]);
         $this->assertDatabaseHas('spin_configurations', ['id' => $secondConfig->id, 'is_active' => false]);
         $this->postJson('/api/admin/spin-configurations')->assertNotFound();
 
@@ -337,6 +348,7 @@ class PhaseTwoTest extends TestCase
     {
         $user = $this->createBasicUser();
         $this->seedWallet($user, 100);
+        $this->seedSpins($user, 1);
         $this->createSpinConfiguration([
             'name' => 'Arithmetic Wheel',
             'cost_points' => 30,
@@ -356,23 +368,25 @@ class PhaseTwoTest extends TestCase
 
         $this->postJson('/api/spins')
             ->assertOk()
-            ->assertJsonPath('spin.points_spent', 30)
+            ->assertJsonPath('spin.points_spent', 0)
+            ->assertJsonPath('spin.spins_spent', 1)
             ->assertJsonPath('spin.points_awarded', 12)
-            ->assertJsonPath('spin.balance_after', 94)
-            ->assertJsonPath('wallet.balance', 94);
+            ->assertJsonPath('spin.balance_after', 124)
+            ->assertJsonPath('spin.spin_balance_after', 0)
+            ->assertJsonPath('wallet.balance', 124);
 
-        $this->assertSame(94, $user->wallet()->firstOrFail()->balance);
-        $this->assertDatabaseHas('point_transactions', [
+        $this->assertSame(124, $user->wallet()->firstOrFail()->balance);
+        $this->assertDatabaseHas('spin_credit_transactions', [
             'user_id' => $user->id,
-            'type' => PointTransaction::TYPE_SPIN_SPEND,
-            'amount' => -30,
-            'balance_after' => 82,
+            'type' => SpinCreditTransaction::TYPE_SPIN_SPEND,
+            'amount' => -1,
+            'balance_after' => 0,
         ]);
         $this->assertDatabaseHas('point_transactions', [
             'user_id' => $user->id,
             'type' => PointTransaction::TYPE_PAID_SPIN_REWARD,
             'amount' => 12,
-            'balance_after' => 94,
+            'balance_after' => 124,
         ]);
     }
 
@@ -380,6 +394,7 @@ class PhaseTwoTest extends TestCase
     {
         $user = $this->createBasicUser();
         $this->seedWallet($user, 100);
+        $this->seedSpins($user, 1);
         $configuration = $this->createSpinConfiguration([
             'name' => 'History Safe Wheel',
             'cost_points' => 10,
@@ -414,6 +429,87 @@ class PhaseTwoTest extends TestCase
             'spin_segment_id' => $originalSegment->id,
             'points_awarded' => 4,
         ]);
+    }
+
+    public function test_user_exchanges_points_for_spin_credits_atomically(): void
+    {
+        $user = $this->createBasicUser();
+        $this->seedWallet($user, 500);
+        $this->loginAs($user);
+        $package = SpinExchangePackage::query()->where('points_cost', 100)->firstOrFail();
+
+        $response = $this->postJson("/api/spin-exchange-packages/{$package->id}/exchange", [], [
+            'Idempotency-Key' => 'exchange-test-key',
+        ])->assertOk()
+            ->assertJsonPath('wallet_balance', 400)
+            ->assertJsonPath('spin_balance', 3);
+
+        $this->postJson("/api/spin-exchange-packages/{$package->id}/exchange", [], [
+            'Idempotency-Key' => 'exchange-test-key',
+        ])->assertOk()->assertExactJson($response->json());
+
+        $this->assertSame(400, $user->wallet()->firstOrFail()->balance);
+        $this->assertSame(3, $user->spinWallet()->firstOrFail()->balance);
+        $this->assertDatabaseCount('spin_credit_transactions', 1);
+        $this->assertDatabaseHas('point_transactions', [
+            'user_id' => $user->id,
+            'type' => PointTransaction::TYPE_SPIN_EXCHANGE,
+            'amount' => -100,
+        ]);
+    }
+
+    public function test_wheel_can_reward_spin_credits(): void
+    {
+        $user = $this->createBasicUser();
+        $this->seedWallet($user, 50);
+        $this->createSpinConfiguration([
+            'name' => 'Spin Reward Wheel',
+            'segments' => [[
+                'label' => 'Spin Reward',
+                'reward_type' => 'spins',
+                'spins_reward' => 4,
+                'points_reward' => 0,
+                'weight' => 100,
+            ]],
+        ]);
+        $this->loginAs($user);
+
+        $this->postJson('/api/spins/free')
+            ->assertOk()
+            ->assertJsonPath('spin.reward_type', 'spins')
+            ->assertJsonPath('spin.reward_amount', 4)
+            ->assertJsonPath('spin.spins_awarded', 4)
+            ->assertJsonPath('spin.spin_balance_after', 4)
+            ->assertJsonPath('wallet.balance', 50);
+
+        $this->assertSame(4, $user->spinWallet()->firstOrFail()->balance);
+    }
+
+    public function test_admin_configures_spin_packages_and_mixed_wheel_rewards(): void
+    {
+        $admin = $this->createAdmin();
+        $this->actingAs($admin);
+
+        $this->putJson('/api/admin/spin-exchange-packages', [
+            'packages' => [
+                ['points_cost' => 100, 'spins_amount' => 3, 'is_active' => true],
+                ['points_cost' => 300, 'spins_amount' => 10, 'is_active' => true],
+            ],
+        ])->assertOk()->assertJsonCount(2, 'packages');
+
+        $this->patchJson('/api/admin/spin-configuration', [
+            'cost_points' => 0,
+            'segments' => [
+                ['reward_type' => 'points', 'reward_amount' => 25, 'weight' => 80],
+                ['reward_type' => 'spins', 'reward_amount' => 2, 'weight' => 20],
+            ],
+        ])->assertOk()
+            ->assertJsonPath('configuration.segments.0.reward_type', 'points')
+            ->assertJsonPath('configuration.segments.0.points_reward', 25)
+            ->assertJsonPath('configuration.segments.1.reward_type', 'spins')
+            ->assertJsonPath('configuration.segments.1.spins_reward', 2);
+
+        $this->assertDatabaseHas('spin_exchange_packages', ['points_cost' => 300, 'spins_amount' => 10]);
     }
 
     protected function createBasicUser(array $overrides = []): User
@@ -460,6 +556,14 @@ class PhaseTwoTest extends TestCase
         );
     }
 
+    protected function seedSpins(User $user, int $balance): SpinWallet
+    {
+        return SpinWallet::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['balance' => $balance],
+        );
+    }
+
     protected function createSpinConfiguration(array $attributes): SpinConfiguration
     {
         $segments = $attributes['segments'];
@@ -481,6 +585,8 @@ class PhaseTwoTest extends TestCase
                 'spin_configuration_id' => $config->id,
                 'label' => $segment['label'],
                 'points_reward' => $segment['points_reward'],
+                'reward_type' => $segment['reward_type'] ?? 'points',
+                'spins_reward' => $segment['spins_reward'] ?? 0,
                 'weight' => $segment['weight'],
                 'max_win_per_day' => $segment['max_win_per_day'] ?? null,
             ]);

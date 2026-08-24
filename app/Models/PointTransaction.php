@@ -20,6 +20,8 @@ class PointTransaction extends Model
 
     public const TYPE_ADMIN_ADJUSTMENT = 'admin_adjustment';
 
+    public const TYPE_SPIN_EXCHANGE = 'spin_exchange';
+
     protected $fillable = [
         'wallet_id',
         'user_id',

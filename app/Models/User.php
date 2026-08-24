@@ -80,4 +80,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(SpinEvent::class);
     }
+
+    public function spinWallet()
+    {
+        return $this->hasOne(SpinWallet::class);
+    }
+
+    public function spinCreditTransactions(): HasMany
+    {
+        return $this->hasMany(SpinCreditTransaction::class);
+    }
+
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
 }

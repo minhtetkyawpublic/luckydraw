@@ -2,7 +2,7 @@
 
 ## 1) Product overview
 
-We are building a **mobile-first Laravel + React PWA** that lets users earn and spend points to spin a reward wheel on a per-day basis.
+We are building a **mobile-first Laravel + React PWA** that lets users earn points, exchange points for spin credits, and use those credits on a reward wheel.
 
 Key decisions:
 
@@ -12,7 +12,8 @@ Key decisions:
 - User accounts: **admin creates users**; self-registration is disabled.
 - Point buying: users contact admin and buy points outside the app. Admin credits points manually via admin interface.
   (No top-up request/approval workflow is included in Phase 1.)
-- Wheel rewards: points-only.
+- Wheel rewards: admin-configurable points or spin credits.
+- Points cannot be spent directly on a wheel spin; users exchange points for spin-credit packages first.
 
 ## 2) Scope (Phase 1)
 
@@ -35,7 +36,7 @@ Key decisions:
 
 ## 3) Roles
 
-- **User**: login, claim bonus, free spin, paid spin, view wallet/history.
+- **User**: login, claim bonus, use the daily free spin, exchange points for spin credits, use spin credits, and view history.
 - **Sole Admin**: manage the single administrator profile, create player accounts, reset player passwords, manually adjust player points, and configure the one Lucky Draw wheel.
 
 ## 4) Authentication rules
@@ -71,25 +72,38 @@ Core tables:
 - `daily_free_spins`
   - unique `(user_id, spin_date)` for one free spin/day.
 - `spin_configurations`
-  - one operational wheel with `cost_points`; lifecycle fields remain internal and are not exposed as multiple-wheel controls.
+  - one operational wheel; paid play consumes one spin credit rather than points.
 - `spin_segments`
-  - FK to configuration, `label`, `points_reward`, `weight`, optional `max_win_per_day`.
+  - FK to configuration, reward type (`points` or `spins`), reward amount, weight, and optional daily cap.
 - `spin_events`
-  - FK to user/config/segment, points spent/awarded, `is_free_spin`, seed/version/payload.
+  - FK to user/config/segment, points/spins spent and awarded, `is_free_spin`, seed/version/payload.
+- `spin_wallets` + `spin_credit_transactions`
+  - one spin-credit balance per user with an immutable exchange/reward/spend ledger.
+- `spin_exchange_packages`
+  - admin-configurable point cost, spin quantity, order, and active status.
+- `announcements`
+  - singleton current post with title, full body, monotonically increasing version, publisher, and publish time.
+- `users.last_read_announcement_version`
+  - compact per-user read marker; every publish becomes unread without creating one notification row per user.
+- `push_subscriptions`
+  - encrypted Web Push endpoint and browser keys per user/device, deduplicated by an indexed SHA-256 endpoint hash.
 
 ## 6) Domain logic
 
 - Wallet is initialized lazily (`getOrCreateWallet`) at first login or first write.
 - Daily bonus:
+  - admin configures seven point amounts in Sunday-to-Saturday order; Sunday is Day 1.
+  - the displayed week rolls over automatically every Sunday without a scheduled task.
+  - each day reports `claimed`, `missed`, `today`, or `upcoming`; claimed days keep their actual awarded amount.
   - backend checks today’s claim before inserting.
   - creates immutable `daily_bonus` ledger row and updates wallet in transaction.
 - Free spin:
   - verifies active wheel config exists.
   - verifies one free spin/day via `daily_free_spins`.
-  - credits reward and writes spin event + reward transaction.
+  - credits the configured point or spin reward and writes the matching immutable transaction.
 - Paid spin:
-  - verifies active config, checks sufficient wallet balance.
-  - writes debit (`spin_spend`) + reward (`paid_spin_reward`) transaction and spin event in one transaction.
+  - verifies active config and sufficient spin-credit balance.
+  - consumes one spin credit and credits either a point or spin reward in one database transaction.
 - All writes use row locks/transactions around wallet changes.
 
 ## 7) Frontend behavior
@@ -103,6 +117,9 @@ Core tables:
 - Sticky bottom navigation + large touch targets.
 - Install prompt behavior from manifest; service worker caches shell and avoids caching API responses.
 - Runtime-safe base resolution derived from loaded bundle path (no hardcoded domain).
+- One current announcement header appears below the user header; opening it displays the full post and marks that version read.
+- User Settings provides explicit Allow/Disable Web Push controls. Permission is requested only from the button action.
+- Service-worker push notifications replace the prior post notification by tag and open the nested-path-safe announcement page.
 
 ## 8) API contract (Phase 1)
 
@@ -121,6 +138,10 @@ Authenticated user:
 - `POST /api/spins/free`
 - `POST /api/spins`
 - `GET /api/spins/me`
+- `GET /api/announcement`
+- `POST /api/announcement/read`
+- `GET /api/push/config`
+- `POST|DELETE /api/push/subscriptions`
 
 Admin:
 
@@ -130,6 +151,15 @@ Admin:
 - `GET /api/admin/spin-configuration`
 - `PATCH /api/admin/spin-configuration`
 - `GET|PATCH /api/admin/profile`
+- `GET|PUT /api/admin/announcement`
+
+## 9A) Single-post notification behavior
+
+- Admin publishes through an explicit button; each publish overwrites the singleton post and increments its version.
+- Only the newest queued version is eligible for delivery; stale jobs exit without sending.
+- Push fan-out uses the database queue in 200-device batches and removes subscriptions rejected as expired (`404`/`410`).
+- In-app notification state remains available even if a user declines or cannot use operating-system Web Push.
+- VAPID keys are stable deployment secrets and must not be regenerated after devices subscribe.
 
 ## 9) Validation checkpoints
 
@@ -149,7 +179,10 @@ Admin:
   - `GET /api/spins/me?type=free|paid&page=...&per_page=...`
   - `GET /api/admin/users` (search, pagination, wallet snapshot)
   - `PATCH /api/admin/users/{user}` (player status/name/email/phone updates; role cannot be changed)
-  - `PATCH /api/admin/spin-configuration` (paid-spin cost, slice count, points per slice, and chance weight per slice)
+  - `PATCH /api/admin/spin-configuration` (reward type, reward amount, slice count, and chance weight)
+  - `GET|PUT /api/admin/spin-exchange-packages`
+  - `GET /api/spin-exchange-packages`
+  - `POST /api/spin-exchange-packages/{package}/exchange`
   - explicit paid-spin error payloads (`COOLDOWN_ACTIVE`, `INSUFFICIENT_BALANCE`)
 
 - Behavior:

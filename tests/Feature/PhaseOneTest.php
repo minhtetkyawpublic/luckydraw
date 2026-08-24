@@ -76,8 +76,16 @@ class PhaseOneTest extends TestCase
 
     public function test_separate_user_and_admin_spa_login_routes_are_available(): void
     {
-        $this->get('/login')->assertOk()->assertSee('id="app"', false);
-        $this->get('/admin/login')->assertOk()->assertSee('id="app"', false);
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('id="app"', false)
+            ->assertSee('Maung Bayin')
+            ->assertSee('/manifest.webmanifest', false);
+        $this->get('/admin/login')
+            ->assertOk()
+            ->assertSee('id="app"', false)
+            ->assertSee('MBY Admin')
+            ->assertSee('/admin-manifest.webmanifest', false);
     }
 
     public function test_admin_can_create_user_and_user_can_login(): void
@@ -205,7 +213,8 @@ class PhaseOneTest extends TestCase
 
         $this->postJson('/api/spins')
             ->assertStatus(422)
-            ->assertJsonPath('message', 'Insufficient balance');
+            ->assertJsonPath('message', 'Insufficient spins')
+            ->assertJsonPath('error_code', 'INSUFFICIENT_SPINS');
     }
 
     protected function seedUserAndLogin(): User

@@ -17,12 +17,15 @@ class SpinSegment extends Model
         'text_color',
         'is_active',
         'points_reward',
+        'reward_type',
+        'spins_reward',
         'weight',
         'max_win_per_day',
     ];
 
     protected $casts = [
         'points_reward' => 'integer',
+        'spins_reward' => 'integer',
         'weight' => 'integer',
         'max_win_per_day' => 'integer',
         'is_active' => 'boolean',

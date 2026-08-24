@@ -16,6 +16,8 @@ class SpinEvent extends Model
         'spin_segment_id',
         'points_spent',
         'points_awarded',
+        'spins_spent',
+        'spins_awarded',
         'is_free_spin',
         'result_payload',
         'random_seed',
@@ -26,6 +28,8 @@ class SpinEvent extends Model
     protected $casts = [
         'points_spent' => 'integer',
         'points_awarded' => 'integer',
+        'spins_spent' => 'integer',
+        'spins_awarded' => 'integer',
         'is_free_spin' => 'boolean',
         'result_payload' => 'array',
     ];

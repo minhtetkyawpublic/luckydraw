@@ -20,11 +20,26 @@ class ApplicationSetting extends Model
         'facebook_page_url',
         'tiktok_channel_url',
         'about_content',
-        'buy_points_instructions',
+        'how_to_use_terms',
         'daily_bonus_points',
+        'daily_bonus_schedule',
         'home_ticker_text',
         'home_board_text',
     ];
+
+    protected $hidden = [
+        'how_to_use_terms_en',
+        'how_to_use_terms_my',
+        'buy_points_instructions',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'daily_bonus_points' => 'integer',
+            'daily_bonus_schedule' => 'array',
+        ];
+    }
 
     public static function defaults(): array
     {
@@ -39,8 +54,10 @@ class ApplicationSetting extends Model
             'facebook_page_url' => null,
             'tiktok_channel_url' => null,
             'about_content' => 'မောင်းဘုရင် is a points-only Lucky Draw Wheel app.',
-            'buy_points_instructions' => "To buy points, contact the administrator outside this app.\nSend your username or phone number, complete payment with the admin, and your wallet points will be added manually.",
+            'how_to_use_terms' => "အပ်(ပ်)အသုံးပြုနည်း\n• အသုံးပြုသူအမည်နှင့် စကားဝှက်ဖြင့် လော့အင်ဝင်ပါ။\n• နေ့စဉ်ပွိုင့်ရယူပြီး ကံစမ်းဘီးကို လှည့်နိုင်ပါသည်။\n• ပွိုင့်ဝယ်ရန် အက်ဒမင်ကို ဆက်သွယ်ပါ။\n\nစည်းကမ်းချက်များ\n• တစ်ရက်လျှင် အခမဲ့တစ်ကြိမ် လှည့်နိုင်ပါသည်။\n• အပ်(ပ်)အတွင်းရှိ ပွိုင့်များကို ငွေသားအဖြစ် သတ်မှတ်မထားပါ။\n• အကူအညီလိုပါက အက်ဒမင်ကို ဆက်သွယ်ပါ။",
             'daily_bonus_points' => 20,
+            // Sunday through Saturday. Day 1 is always Sunday.
+            'daily_bonus_schedule' => [20, 20, 20, 20, 20, 20, 20],
             'home_ticker_text' => 'Welcome to မောင်းဘုရင် • One free spin every day • Points-only rewards • Contact admin to exchange or buy points',
             'home_board_text' => "One free spin every day\nPoints-only wheel rewards\nPaid spins use wallet points\nDaily bonus available once\nAll activity is recorded\nContact admin for points",
         ];

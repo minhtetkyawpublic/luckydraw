@@ -31,8 +31,10 @@ class ApplicationSettingController extends Controller
             'facebook_page_url' => ['nullable', 'url:http,https', 'max:2048'],
             'tiktok_channel_url' => ['nullable', 'url:http,https', 'max:2048'],
             'about_content' => ['nullable', 'string', 'max:5000'],
-            'buy_points_instructions' => ['nullable', 'string', 'max:5000'],
+            'how_to_use_terms' => ['nullable', 'string', 'max:10000'],
             'daily_bonus_points' => ['required', 'integer', 'min:0', 'max:1000000'],
+            'daily_bonus_schedule' => ['required', 'array', 'size:7'],
+            'daily_bonus_schedule.*' => ['required', 'integer', 'min:0', 'max:1000000'],
             'home_ticker_text' => ['nullable', 'string', 'max:1000'],
             'home_board_text' => ['nullable', 'string', 'max:5000'],
         ]);

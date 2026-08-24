@@ -1,4 +1,4 @@
-const VERSION = 'v8-editable-home-content';
+const VERSION = 'v10-mby-announcement-push';
 const PATHNAME = new URL(self.location.href).pathname;
 const SW_MARKER = '/sw.js';
 const BASE_PATH = (PATHNAME.lastIndexOf(SW_MARKER) >= 0
@@ -25,10 +25,12 @@ const SHELL_CACHE = `lucky-draw-shell-${VERSION}`;
 const API_PREFIX = joinPath('api');
 const SANCTUM_CSRF = joinPath('sanctum/csrf-cookie');
 const APP_MANIFEST = joinPath('manifest.webmanifest');
+const ADMIN_MANIFEST = joinPath('admin-manifest.webmanifest');
 const BUILD_MANIFEST = joinPath('build/manifest.json');
 const APP_SHELL = [
     joinPath(''),
     APP_MANIFEST,
+    ADMIN_MANIFEST,
     joinPath('favicon.ico'),
     joinPath('robots.txt'),
     joinPath('logo.png'),
@@ -94,6 +96,64 @@ self.addEventListener('message', (event) => {
     if (event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
+});
+
+self.addEventListener('push', (event) => {
+    event.waitUntil((async () => {
+        let payload = {};
+        try {
+            payload = event.data?.json() || {};
+        } catch {
+            payload = { body: event.data?.text() || '' };
+        }
+
+        const tag = payload.tag || 'mby-current-announcement';
+        const currentNotifications = await self.registration.getNotifications({ tag });
+        currentNotifications.forEach((notification) => notification.close());
+
+        await self.registration.showNotification(payload.title || 'မောင်းဘုရင်', {
+            body: payload.body || 'အသိပေးစာအသစ် ရရှိပါသည်။',
+            icon: joinPath('logo.png'),
+            badge: joinPath('logotransparent.png'),
+            tag,
+            renotify: true,
+            data: {
+                url: joinPath(payload.url || 'announcement'),
+                version: payload.version || null,
+            },
+        });
+
+        const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        windows.forEach((client) => client.postMessage({
+            type: 'ANNOUNCEMENT_UPDATED',
+            version: payload.version || null,
+        }));
+    })());
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const targetUrl = new URL(event.notification.data?.url || joinPath('announcement'), self.location.origin).href;
+
+    event.waitUntil((async () => {
+        const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        for (const client of windows) {
+            if (client.url === targetUrl && 'focus' in client) return client.focus();
+        }
+        for (const client of windows) {
+            if ('navigate' in client && 'focus' in client) {
+                await client.navigate(targetUrl);
+                return client.focus();
+            }
+        }
+        return self.clients.openWindow ? self.clients.openWindow(targetUrl) : undefined;
+    })());
+});
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+    event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+        windows.forEach((client) => client.postMessage({ type: 'PUSH_SUBSCRIPTION_CHANGED' }));
+    }));
 });
 
 function isNetworkOnlyRequest(url) {

@@ -24,6 +24,12 @@ npm install
 php artisan key:generate
 php artisan migrate --seed
 
+WEB PUSH SETUP - FIRST TIME ONLY
+Run: php artisan webpush:vapid
+Copy the public and private values into .env using the WEBPUSH_VAPID_* names,
+then run: php artisan config:clear
+Never regenerate these keys after browser devices have subscribed.
+
 Do not run "php artisan key:generate" again after users/sessions are in use.
 Do not use migrate:fresh or db:wipe on a database containing real data.
 
@@ -88,6 +94,12 @@ http://127.0.0.1:8000/admin/spin-config
 
 Admin App Links and Home Content:
 http://127.0.0.1:8000/admin/app-settings
+
+Admin Notification Post:
+http://127.0.0.1:8000/admin/announcement
+
+Current User Announcement:
+http://127.0.0.1:8000/announcement
 
 Admin Account and Settings:
 http://127.0.0.1:8000/admin/settings

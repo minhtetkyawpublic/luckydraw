@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\ApplicationSetting;
 use App\Models\DailyFreeSpin;
 use App\Models\DailyPointClaim;
-use App\Models\PointsWallet;
 use App\Models\PointTransaction;
+use App\Models\SpinCreditTransaction;
 use App\Models\SpinEvent;
 use App\Models\User;
 use Carbon\Carbon;
@@ -17,6 +18,7 @@ class SpinService
 {
     public function __construct(
         private readonly WalletService $walletService,
+        private readonly SpinCreditService $spinCreditService,
         private readonly SpinEligibilityService $eligibility,
         private readonly SpinMonitoringService $monitoringService,
     ) {}
@@ -43,7 +45,8 @@ class SpinService
                 'spin_configuration_id' => $config->id,
                 'spin_segment_id' => $segment->id,
                 'points_spent' => 0,
-                'points_awarded' => $segment->points_reward,
+                'points_awarded' => $segment->reward_type === 'points' ? $segment->points_reward : 0,
+                'spins_awarded' => $segment->reward_type === 'spins' ? $segment->spins_reward : 0,
                 'is_free_spin' => true,
                 'random_seed' => Str::uuid()->toString(),
                 'algorithm_version' => 'v1',
@@ -53,24 +56,7 @@ class SpinService
                 ],
             ]);
 
-            $transaction = $this->walletService->credit(
-                $user,
-                $segment->points_reward,
-                PointTransaction::TYPE_FREE_SPIN_REWARD,
-                [
-                    'reference_type' => SpinEvent::class,
-                    'reference_id' => $event->id,
-                    'notes' => 'Free spin reward',
-                ]
-            );
-
-            $event->update([
-                'points_awarded' => $segment->points_reward,
-                'result_payload' => array_merge($event->result_payload ?? [], [
-                    'transaction_id' => $transaction->id,
-                    'balance_after' => $transaction->balance_after,
-                ]),
-            ]);
+            $this->applyReward($user, $event, $segment, true);
 
             try {
                 DailyFreeSpin::query()->create([
@@ -99,34 +85,16 @@ class SpinService
 
             $this->eligibility->assertPaidSpinAllowedAt($user, $config);
 
-            try {
-                $wallet = PointsWallet::query()
-                    ->where('user_id', $user->id)
-                    ->lockForUpdate()
-                    ->first();
-
-                if (! $wallet) {
-                    $wallet = PointsWallet::query()->create([
-                        'user_id' => $user->id,
-                        'balance' => 0,
-                    ]);
-                }
-            } catch (QueryException) {
-                $wallet = PointsWallet::query()->where('user_id', $user->id)->lockForUpdate()->firstOrFail();
-            }
-
-            if (! $wallet || $wallet->balance < $config->cost_points) {
-                throw new \RuntimeException('Insufficient balance');
-            }
-
             $segment = $this->eligibility->chooseRewardSegment($config, $user->id);
 
             $event = SpinEvent::create([
                 'user_id' => $user->id,
                 'spin_configuration_id' => $config->id,
                 'spin_segment_id' => $segment->id,
-                'points_spent' => $config->cost_points,
-                'points_awarded' => $segment->points_reward,
+                'points_spent' => 0,
+                'spins_spent' => 1,
+                'points_awarded' => $segment->reward_type === 'points' ? $segment->points_reward : 0,
+                'spins_awarded' => $segment->reward_type === 'spins' ? $segment->spins_reward : 0,
                 'is_free_spin' => false,
                 'random_seed' => Str::uuid()->toString(),
                 'algorithm_version' => 'v1',
@@ -136,44 +104,18 @@ class SpinService
                 ],
             ]);
 
-            $spendBalanceAfter = $wallet->balance - $config->cost_points;
-
-            PointTransaction::create([
-                'wallet_id' => $wallet->id,
-                'user_id' => $user->id,
-                'type' => PointTransaction::TYPE_SPIN_SPEND,
-                'amount' => -abs($config->cost_points),
-                'balance_after' => $spendBalanceAfter,
+            $spinSpend = $this->spinCreditService->debit($user, 1, SpinCreditTransaction::TYPE_SPIN_SPEND, [
                 'reference_type' => SpinEvent::class,
                 'reference_id' => $event->id,
-                'notes' => 'Paid spin spend',
+                'notes' => 'Spin credit used',
             ]);
-
-            $wallet = PointsWallet::query()->where('id', $wallet->id)->lockForUpdate()->firstOrFail();
-            $wallet->update([
-                'balance' => $spendBalanceAfter,
-            ]);
-
-            $rewardBalanceAfter = $spendBalanceAfter + $segment->points_reward;
-            $rewardTransaction = PointTransaction::create([
-                'wallet_id' => $wallet->id,
-                'user_id' => $user->id,
-                'type' => PointTransaction::TYPE_PAID_SPIN_REWARD,
-                'amount' => $segment->points_reward,
-                'balance_after' => $rewardBalanceAfter,
-                'reference_type' => SpinEvent::class,
-                'reference_id' => $event->id,
-                'notes' => 'Paid spin reward',
-            ]);
-
-            $wallet->update(['balance' => $rewardBalanceAfter]);
-
             $event->update([
                 'result_payload' => array_merge($event->result_payload ?? [], [
-                    'reward_transaction_id' => $rewardTransaction->id,
-                    'balance_after' => $rewardTransaction->balance_after,
+                    'spin_spend_transaction_id' => $spinSpend->id,
+                    'spin_balance_after_spend' => $spinSpend->balance_after,
                 ]),
             ]);
+            $this->applyReward($user, $event->fresh(), $segment, false);
 
             $this->monitoringService->inspectForAnomalies($user);
 
@@ -198,13 +140,48 @@ class SpinService
         }
 
         $cooldown = $this->eligibility->getPaidSpinCooldownInfo($user->id, $config);
+        $today = Carbon::today();
+        $weekStart = $today->copy()->startOfWeek(Carbon::SUNDAY);
+        $weekEnd = $weekStart->copy()->addDays(6);
+        $settings = ApplicationSetting::current();
+        $bonusSchedule = $settings->daily_bonus_schedule;
+        if (! is_array($bonusSchedule) || count($bonusSchedule) !== 7) {
+            $bonusSchedule = array_fill(0, 7, (int) $settings->daily_bonus_points);
+        }
+
+        $claims = DailyPointClaim::query()
+            ->where('user_id', $user->id)
+            ->whereBetween('claim_date', [$weekStart->toDateString(), $weekEnd->toDateString()])
+            ->get(['claim_date', 'points_awarded'])
+            ->keyBy(fn (DailyPointClaim $claim) => $claim->claim_date->toDateString());
+
+        $dailyBonusWeek = collect(range(0, 6))->map(function (int $dayOffset) use ($bonusSchedule, $claims, $today, $weekStart): array {
+            $date = $weekStart->copy()->addDays($dayOffset);
+            $claim = $claims->get($date->toDateString());
+
+            $status = match (true) {
+                $claim !== null => 'claimed',
+                $date->isBefore($today) => 'missed',
+                $date->isSameDay($today) => 'today',
+                default => 'upcoming',
+            };
+
+            return [
+                'day' => $dayOffset + 1,
+                'weekday' => $date->format('l'),
+                'date' => $date->toDateString(),
+                'points' => $claim ? (int) $claim->points_awarded : (int) $bonusSchedule[$dayOffset],
+                'status' => $status,
+            ];
+        })->all();
+
+        $canClaimDailyBonus = ! $claims->has($today->toDateString());
 
         return [
             'config' => $config ? [
                 'id' => $config->id,
                 'name' => $config->name,
                 'center_label' => $config->center_label,
-                'cost_points' => $config->cost_points,
                 'cooldown_seconds' => $config->cooldown_seconds,
                 'is_active' => $config->is_active,
             ] : null,
@@ -215,17 +192,58 @@ class SpinService
                     'color' => $segment->color,
                     'text_color' => $segment->text_color,
                     'points_reward' => (int) $segment->points_reward,
+                    'spins_reward' => (int) $segment->spins_reward,
+                    'reward_type' => $segment->reward_type,
+                    'reward_amount' => $segment->reward_type === 'spins' ? (int) $segment->spins_reward : (int) $segment->points_reward,
                     'weight' => (int) $segment->weight,
                 ];
             })->values() ?? [],
             'can_free_spin_today' => $canFreeSpin,
-            'can_claim_daily_bonus' => ! DailyPointClaim::query()
-                ->where('user_id', $user->id)
-                ->where('claim_date', Carbon::today()->toDateString())
-                ->exists(),
+            'can_claim_daily_bonus' => $canClaimDailyBonus,
+            'daily_bonus_week' => $dailyBonusWeek,
             'wallet_balance' => $hasWallet ? $hasWallet->balance : 0,
+            'spin_balance' => $this->spinCreditService->getOrCreateWallet($user)->balance,
             'next_paid_spin_at' => $cooldown['next_paid_spin_at'],
             'paid_spin_cooldown_remaining_seconds' => $cooldown['paid_spin_cooldown_remaining_seconds'],
         ];
+    }
+
+    private function applyReward(User $user, SpinEvent $event, $segment, bool $isFree): void
+    {
+        if ($segment->reward_type === 'spins') {
+            $transaction = $this->spinCreditService->credit(
+                $user,
+                (int) $segment->spins_reward,
+                SpinCreditTransaction::TYPE_WHEEL_REWARD,
+                ['reference_type' => SpinEvent::class, 'reference_id' => $event->id, 'notes' => 'Wheel spin reward']
+            );
+            $event->update([
+                'result_payload' => array_merge($event->result_payload ?? [], [
+                    'reward_type' => 'spins',
+                    'reward_amount' => (int) $segment->spins_reward,
+                    'spin_reward_transaction_id' => $transaction->id,
+                    'spin_balance_after' => $transaction->balance_after,
+                    'balance_after' => $this->walletService->getOrCreateWallet($user)->balance,
+                ]),
+            ]);
+
+            return;
+        }
+
+        $transaction = $this->walletService->credit(
+            $user,
+            (int) $segment->points_reward,
+            $isFree ? PointTransaction::TYPE_FREE_SPIN_REWARD : PointTransaction::TYPE_PAID_SPIN_REWARD,
+            ['reference_type' => SpinEvent::class, 'reference_id' => $event->id, 'notes' => $isFree ? 'Free spin reward' : 'Spin reward']
+        );
+        $event->update([
+            'result_payload' => array_merge($event->result_payload ?? [], [
+                'reward_type' => 'points',
+                'reward_amount' => (int) $segment->points_reward,
+                'reward_transaction_id' => $transaction->id,
+                'balance_after' => $transaction->balance_after,
+                'spin_balance_after' => $this->spinCreditService->getOrCreateWallet($user)->balance,
+            ]),
+        ]);
     }
 }
