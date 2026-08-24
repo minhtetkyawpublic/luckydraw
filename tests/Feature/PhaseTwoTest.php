@@ -9,6 +9,7 @@ use App\Models\SpinSegment;
 use App\Models\User;
 use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -133,6 +134,13 @@ class PhaseTwoTest extends TestCase
             'status' => 'active',
         ]);
         $this->seedWallet($user, 5);
+        $user->forceFill(['remember_token' => 'remember-me-before-disable'])->save();
+        DB::table('sessions')->insert([
+            'id' => 'disabled-user-session',
+            'user_id' => $user->id,
+            'payload' => '',
+            'last_activity' => now()->timestamp,
+        ]);
         $this->loginAs($admin);
 
         $this->getJson('/api/admin/users?q=Target&per_page=10')
@@ -142,6 +150,8 @@ class PhaseTwoTest extends TestCase
         $toggle = $this->patchJson("/api/admin/users/{$user->id}", ['status' => 'disabled']);
         $toggle->assertOk()->assertJsonPath('user.status', 'disabled');
         $this->assertDatabaseHas('users', ['id' => $user->id, 'status' => 'disabled']);
+        $this->assertDatabaseMissing('sessions', ['id' => 'disabled-user-session']);
+        $this->assertNotSame('remember-me-before-disable', $user->fresh()->remember_token);
 
         $this->patchJson("/api/admin/users/{$user->id}", [
             'name' => 'Updated Target User',
@@ -215,6 +225,13 @@ class PhaseTwoTest extends TestCase
     {
         $admin = $this->createAdmin();
         $this->loginAs($admin);
+        $admin->forceFill(['remember_token' => 'admin-remember-before-change'])->save();
+        DB::table('sessions')->insert([
+            'id' => 'other-admin-session',
+            'user_id' => $admin->id,
+            'payload' => '',
+            'last_activity' => now()->timestamp,
+        ]);
 
         $this->patchJson('/api/admin/profile/password', [
             'current_password' => 'incorrect-password',
@@ -231,6 +248,31 @@ class PhaseTwoTest extends TestCase
         $admin->refresh();
         $this->assertFalse(Hash::check('password123', $admin->password));
         $this->assertTrue(Hash::check('new-password-123', $admin->password));
+        $this->assertNotSame('admin-remember-before-change', $admin->remember_token);
+        $this->assertDatabaseMissing('sessions', ['id' => 'other-admin-session']);
+    }
+
+    public function test_admin_password_reset_revokes_user_sessions_and_remember_token(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createBasicUser();
+        $user->forceFill(['remember_token' => 'user-remember-before-reset'])->save();
+        DB::table('sessions')->insert([
+            'id' => 'user-session-before-reset',
+            'user_id' => $user->id,
+            'payload' => '',
+            'last_activity' => now()->timestamp,
+        ]);
+        $this->loginAs($admin);
+
+        $this->postJson("/api/admin/users/{$user->id}/reset-password", [
+            'password' => 'replacement-password-123',
+        ])->assertOk();
+
+        $user->refresh();
+        $this->assertTrue(Hash::check('replacement-password-123', $user->password));
+        $this->assertNotSame('user-remember-before-reset', $user->remember_token);
+        $this->assertDatabaseMissing('sessions', ['id' => 'user-session-before-reset']);
     }
 
     public function test_user_transactions_endpoint_supports_type_and_pagination(): void

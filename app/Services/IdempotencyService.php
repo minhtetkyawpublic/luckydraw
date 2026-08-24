@@ -6,6 +6,7 @@ use App\Models\RequestIdempotencyKey;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -13,8 +14,14 @@ class IdempotencyService
 {
     private const DEFAULT_TTL_SECONDS = 86400;
 
+    private const PROCESSING_TIMEOUT_SECONDS = 300;
+
+    private const CLEANUP_CACHE_KEY = 'luckydraw:idempotency:last-cleanup';
+
     public function handle(Request $request, string $scope, callable $callback): JsonResponse
     {
+        $this->maybePurgeExpiredEntries();
+
         $idempotencyKey = $this->resolveIdempotencyKey($request);
         if (! $idempotencyKey) {
             return $this->normalizeResponse($callback());
@@ -33,6 +40,10 @@ class IdempotencyService
             }
 
             if ($existing->response_status === null) {
+                if ($this->removeStaleProcessingEntry($existing)) {
+                    return $this->handle($request, $scope, $callback);
+                }
+
                 return response()->json([
                     'message' => 'Idempotent request is still processing.',
                 ], 409);
@@ -72,17 +83,26 @@ class IdempotencyService
         }
 
         try {
-            $response = $this->normalizeResponse($callback());
+            $response = DB::transaction(function () use ($callback, $entry): JsonResponse {
+                $response = $this->normalizeResponse($callback());
+
+                $entry->update([
+                    'response_status' => $response->getStatusCode(),
+                    'response_payload' => $response->getData(true),
+                    'completed_at' => now(),
+                ]);
+
+                return $response;
+            });
         } catch (Throwable $exception) {
-            $entry->delete();
+            try {
+                $entry->delete();
+            } catch (Throwable) {
+                // A stale processing entry can be recovered after the timeout.
+            }
+
             throw $exception;
         }
-
-        $entry->update([
-            'response_status' => $response->getStatusCode(),
-            'response_payload' => $response->getData(true),
-            'completed_at' => now(),
-        ]);
 
         return $response;
     }
@@ -121,6 +141,30 @@ class IdempotencyService
             ->where('idempotency_key', $key)
             ->latest('id')
             ->first();
+    }
+
+    private function removeStaleProcessingEntry(RequestIdempotencyKey $entry): bool
+    {
+        if (! $entry->created_at || $entry->created_at->isAfter(now()->subSeconds(self::PROCESSING_TIMEOUT_SECONDS))) {
+            return false;
+        }
+
+        return RequestIdempotencyKey::query()
+            ->whereKey($entry->id)
+            ->whereNull('response_status')
+            ->where('created_at', '<=', now()->subSeconds(self::PROCESSING_TIMEOUT_SECONDS))
+            ->delete() === 1;
+    }
+
+    private function maybePurgeExpiredEntries(): void
+    {
+        try {
+            if (Cache::add(self::CLEANUP_CACHE_KEY, now()->timestamp, now()->addDay())) {
+                $this->purgeExpiredEntries();
+            }
+        } catch (Throwable) {
+            // Cleanup must never prevent a user from spinning.
+        }
     }
 
     private function normalizeResponse(mixed $response): JsonResponse

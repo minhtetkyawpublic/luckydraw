@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PointTransaction;
 use App\Models\User;
 use App\Services\AdminAuditService;
+use App\Services\SessionSecurityService;
 use App\Services\WalletService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +19,7 @@ class AdminUserController extends Controller
     public function __construct(
         private readonly WalletService $walletService,
         private readonly AdminAuditService $auditService,
+        private readonly SessionSecurityService $sessionSecurityService,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -201,7 +203,12 @@ class AdminUserController extends Controller
             'status_note' => 'nullable|string|max:1000',
         ]);
 
+        $shouldRevokeSessions = ($data['status'] ?? null) === 'disabled' && $user->status !== 'disabled';
         $user->update($data);
+
+        if ($shouldRevokeSessions) {
+            $this->sessionSecurityService->revoke($user);
+        }
 
         $this->auditService->log([
             'actor' => $request->user(),
@@ -317,6 +324,7 @@ class AdminUserController extends Controller
         $user->update([
             'password' => $data['password'],
         ]);
+        $this->sessionSecurityService->revoke($user);
 
         $this->auditService->log([
             'actor' => $request->user(),
@@ -433,6 +441,8 @@ class AdminUserController extends Controller
         }
 
         $admin->update(['password' => $data['password']]);
+        $currentSessionId = $request->hasSession() ? $request->session()->getId() : null;
+        $this->sessionSecurityService->revoke($admin, $currentSessionId);
 
         $this->auditService->log([
             'actor' => $admin,

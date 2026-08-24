@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\PointsWallet;
+use App\Models\RequestIdempotencyKey;
 use App\Models\SpinConfiguration;
 use App\Models\SpinEvent;
 use App\Models\SpinSegment;
@@ -12,6 +13,8 @@ use App\Services\SpinEligibilityService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -69,6 +72,88 @@ class PhaseThreeTest extends TestCase
         $this->assertDatabaseMissing('request_idempotency_keys', [
             'user_id' => $user->id,
             'idempotency_key' => 'failing-spin-key',
+        ]);
+    }
+
+    public function test_idempotent_callback_database_changes_roll_back_with_failed_response(): void
+    {
+        $user = $this->createBasicUser(['name' => 'Original Name']);
+        $request = Request::create('/api/spins', 'POST', [], [], [], [
+            'HTTP_IDEMPOTENCY_KEY' => 'atomic-failing-key',
+        ]);
+        $request->setUserResolver(fn () => $user);
+
+        try {
+            app(IdempotencyService::class)->handle($request, 'spin.paid', function () use ($user): void {
+                $user->update(['name' => 'Must Roll Back']);
+                throw new RuntimeException('Failure after database write');
+            });
+            $this->fail('The simulated failure should be rethrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Failure after database write', $exception->getMessage());
+        }
+
+        $this->assertSame('Original Name', $user->fresh()->name);
+        $this->assertDatabaseMissing('request_idempotency_keys', [
+            'user_id' => $user->id,
+            'idempotency_key' => 'atomic-failing-key',
+        ]);
+    }
+
+    public function test_stale_processing_key_recovers_and_expired_keys_clean_automatically(): void
+    {
+        Cache::forget('luckydraw:idempotency:last-cleanup');
+        $user = $this->createBasicUser();
+        $request = Request::create('/api/spins', 'POST', [], [], [], [
+            'HTTP_IDEMPOTENCY_KEY' => 'stale-processing-key',
+        ]);
+        $request->setUserResolver(fn () => $user);
+        $requestHash = hash('sha256', json_encode([
+            'method' => 'POST',
+            'path' => 'api/spins',
+            'payload' => [],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION));
+
+        $staleEntry = RequestIdempotencyKey::query()->create([
+            'user_id' => $user->id,
+            'scope' => 'spin.paid',
+            'idempotency_key' => 'stale-processing-key',
+            'request_hash' => $requestHash,
+        ]);
+        DB::table('request_idempotency_keys')->where('id', $staleEntry->id)->update([
+            'created_at' => now()->subMinutes(10),
+            'updated_at' => now()->subMinutes(10),
+        ]);
+
+        $expiredEntry = RequestIdempotencyKey::query()->create([
+            'user_id' => $user->id,
+            'scope' => 'spin.free',
+            'idempotency_key' => 'expired-key',
+            'request_hash' => 'expired',
+            'response_status' => 200,
+            'response_payload' => ['ok' => true],
+            'completed_at' => now()->subDays(2),
+        ]);
+        DB::table('request_idempotency_keys')->where('id', $expiredEntry->id)->update([
+            'created_at' => now()->subDays(2),
+            'updated_at' => now()->subDays(2),
+        ]);
+
+        $response = app(IdempotencyService::class)->handle($request, 'spin.paid', fn () => [
+            'data' => ['message' => 'Recovered'],
+            'status' => 200,
+        ]);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('Recovered', $response->getData(true)['message']);
+        $this->assertDatabaseCount('request_idempotency_keys', 1);
+        $this->assertDatabaseHas('request_idempotency_keys', [
+            'user_id' => $user->id,
+            'idempotency_key' => 'stale-processing-key',
+            'response_status' => 200,
+        ]);
+        $this->assertDatabaseMissing('request_idempotency_keys', [
+            'idempotency_key' => 'expired-key',
         ]);
     }
 

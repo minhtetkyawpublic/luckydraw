@@ -13,9 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withSchedule(function ($schedule): void {
-        $schedule->command('lucky-draw:cleanup-idempotency')->dailyAt('01:00');
-    })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
 
