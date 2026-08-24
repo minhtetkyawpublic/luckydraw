@@ -29,8 +29,9 @@ class AuthController extends Controller
 
     private function authenticate(Request $request, string $expectedRole): JsonResponse
     {
+        $identifierField = $expectedRole === 'admin' ? 'email_or_phone' : 'username';
         $data = $request->validate([
-            'email_or_phone' => 'required|string|max:255',
+            $identifierField => 'required|string|max:255',
             'password' => 'required|string|max:255',
             'remember_me' => 'sometimes|boolean',
         ]);
@@ -46,6 +47,7 @@ class AuthController extends Controller
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
+                    'username' => $user->username,
                     'email' => $user->email,
                     'phone' => $user->phone,
                     'role' => $user->role,
@@ -93,6 +95,7 @@ class AuthController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'username' => $user->username,
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role,

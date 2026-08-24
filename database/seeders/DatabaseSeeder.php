@@ -54,6 +54,7 @@ class DatabaseSeeder extends Seeder
                 ['email' => 'sample@luckydraw.local'],
                 [
                     'name' => 'Sample Player',
+                    'username' => 'sampleplayer',
                     'phone' => '09123456789',
                     'password' => 'sample1234',
                     'role' => 'user',

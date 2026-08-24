@@ -57,10 +57,10 @@ This roadmap is based on:
   - `POST /api/auth/admin/login` for the administrator
   - `POST /api/auth/logout`
   - `GET /api/auth/me`
-- [x] Login payload supports `email_or_phone`, `password`, `remember_me`.
+- [x] Player login payload supports `username`, `password`, `remember_me`; administrator login retains `email_or_phone`, `password`, `remember_me`.
 - [x] Separate user `/login` and administrator `/admin/login` portals with role enforcement and separate dashboards.
 - [x] Ensure status checks (active/disabled) and session invalidation on logout.
-- [x] Add `users.role`, `users.status`, `users.phone`.
+- [x] Add `users.role`, `users.status`, optional contact fields, and a unique player `username` separate from the normal display name.
 - [x] Add core tables:
   - `points_wallets`
   - `point_transactions`

@@ -260,9 +260,12 @@ class PhaseThreeTest extends TestCase
 
     protected function createBasicUser(array $overrides = []): User
     {
+        $suffix = random_int(1000, 9999);
+
         return User::query()->create(array_merge([
             'name' => 'Phase Three User',
-            'email' => 'phase3-user-'.random_int(1000, 9999).'@example.com',
+            'username' => 'phase3user'.$suffix,
+            'email' => 'phase3-user-'.$suffix.'@example.com',
             'password' => 'password123',
             'role' => 'user',
             'status' => 'active',
@@ -284,7 +287,7 @@ class PhaseThreeTest extends TestCase
     {
         $endpoint = $user->isAdmin() ? '/api/auth/admin/login' : '/api/auth/login';
         $response = $this->postJson($endpoint, [
-            'email_or_phone' => $user->email,
+            ($user->isAdmin() ? 'email_or_phone' : 'username') => $user->isAdmin() ? $user->email : $user->username,
             'password' => 'password123',
         ]);
 

@@ -33,7 +33,7 @@ class PhaseFourTest extends TestCase
     {
         $endpoint = $user->isAdmin() ? '/api/auth/admin/login' : '/api/auth/login';
         $response = $this->postJson($endpoint, [
-            'email_or_phone' => $user->email,
+            ($user->isAdmin() ? 'email_or_phone' : 'username') => $user->isAdmin() ? $user->email : $user->username,
             'password' => 'password123',
         ]);
 

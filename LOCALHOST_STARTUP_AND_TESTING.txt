@@ -46,11 +46,12 @@ Email: admin@luckydraw.local
 Password: admin1234
 
 SAMPLE USER
-Email: sample@luckydraw.local
-Phone: 09123456789
+Name: Sample Player
+Username: sampleplayer
 Password: sample1234
 
-The login field accepts either the account email address or phone number.
+Player login accepts the username only. Administrator login continues to accept
+the administrator email address or phone number.
 
 The sample user starts with 1,000 points on a new database. Its balance may be
 different after testing spins, bonuses, or admin point adjustments.

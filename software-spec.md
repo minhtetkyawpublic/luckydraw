@@ -45,7 +45,9 @@ Key decisions:
   - `POST /api/auth/admin/login` (administrator account only)
   - `POST /api/auth/logout`
   - `GET /api/auth/me`
-- Login payload: `email_or_phone`, `password`, `remember_me: boolean`.
+- User login payload: `username`, `password`, `remember_me: boolean`.
+- Administrator login payload: `email_or_phone`, `password`, `remember_me: boolean`.
+- Player accounts have a normal display `name` plus a unique, case-insensitive `username`; email and phone are optional contact fields and are not accepted as player login identifiers.
 - User UI login: `/login`; administrator UI login: `/admin/login`. Each portal rejects accounts with the wrong role.
 - No registration API endpoint exposed.
 - Route guard: `auth:sanctum`.
@@ -57,7 +59,8 @@ Key decisions:
 Core tables:
 
 - `users`
-  - `role` (`user|admin`), `status` (`active|disabled`), `phone` nullable unique.
+  - `name`, unique nullable `username`, nullable unique `email`, nullable unique `phone`, `role` (`user|admin`), `status` (`active|disabled`).
+  - `username` is required for player accounts and remains nullable for the sole administrator, whose separate portal continues to use email or phone.
 - `points_wallets`
   - `user_id` unique FK, `balance`.
 - `point_transactions`

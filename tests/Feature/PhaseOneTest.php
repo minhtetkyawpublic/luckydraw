@@ -40,6 +40,7 @@ class PhaseOneTest extends TestCase
     {
         User::query()->create([
             'name' => 'Browser User',
+            'username' => 'browseruser',
             'email' => 'browser@example.com',
             'password' => 'secret123',
             'role' => 'user',
@@ -49,14 +50,21 @@ class PhaseOneTest extends TestCase
         $this->get('/sanctum/csrf-cookie')->assertNoContent();
 
         $this->postJson('/api/auth/login', [
-            'email_or_phone' => 'browser@example.com',
+            'username' => 'browseruser',
             'password' => 'secret123',
             'remember_me' => true,
         ])->assertOk();
 
         $this->getJson('/api/auth/me')
             ->assertOk()
-            ->assertJsonPath('user.email', 'browser@example.com');
+            ->assertJsonPath('user.name', 'Browser User')
+            ->assertJsonPath('user.username', 'browseruser');
+
+        $this->postJson('/api/auth/logout')->assertOk();
+        $this->postJson('/api/auth/login', [
+            'username' => 'browser@example.com',
+            'password' => 'secret123',
+        ])->assertUnprocessable()->assertJsonPath('message', 'Invalid credentials');
 
         $this->get('/api/sanctum/csrf-cookie')->assertNotFound();
     }
@@ -89,25 +97,42 @@ class PhaseOneTest extends TestCase
 
         $response = $this->postJson('/api/admin/users', [
             'name' => 'Created User',
-            'email' => 'created@example.com',
+            'username' => 'createduser',
             'password' => 'User12345',
-            'role' => 'user',
-            'phone' => '0912345678',
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('user.email', 'created@example.com')
+            ->assertJsonPath('user.name', 'Created User')
+            ->assertJsonPath('user.username', 'createduser')
+            ->assertJsonPath('user.email', null)
             ->assertJsonPath('user.role', 'user');
         $this->assertSame(1, User::query()->where('role', 'admin')->count());
 
         $this->postJson('/api/auth/logout');
 
         $this->postJson('/api/auth/login', [
-            'email_or_phone' => '0912345678',
+            'username' => 'createduser',
             'password' => 'User12345',
         ])->assertOk()
             ->assertJsonPath('user.role', 'user')
-            ->assertJsonPath('user.phone', '0912345678');
+            ->assertJsonPath('user.name', 'Created User')
+            ->assertJsonPath('user.username', 'createduser');
+
+        $this->postJson('/api/auth/login', [
+            'username' => 'CREATEDUSER',
+            'password' => 'User12345',
+        ])->assertOk()->assertJsonPath('user.username', 'createduser');
+
+        $this->postJson('/api/auth/logout')->assertOk();
+        $this->postJson('/api/auth/admin/login', [
+            'email_or_phone' => 'admin@example.com',
+            'password' => 'admin123',
+        ])->assertOk();
+        $this->postJson('/api/admin/users', [
+            'name' => 'Duplicate Username',
+            'username' => 'CREATEDUSER',
+            'password' => 'User12345',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['username']);
     }
 
     public function test_user_and_admin_login_portals_reject_the_wrong_account_role(): void
@@ -121,6 +146,7 @@ class PhaseOneTest extends TestCase
         ]);
         User::query()->create([
             'name' => 'Portal User',
+            'username' => 'portaluser',
             'email' => 'portal-user@example.com',
             'password' => 'secret123',
             'role' => 'user',
@@ -128,9 +154,9 @@ class PhaseOneTest extends TestCase
         ]);
 
         $this->postJson('/api/auth/login', [
-            'email_or_phone' => 'portal-admin@example.com',
+            'username' => 'portal-admin@example.com',
             'password' => 'secret123',
-        ])->assertUnprocessable()->assertJsonPath('message', 'This account belongs to the administrator portal.');
+        ])->assertUnprocessable()->assertJsonPath('message', 'Invalid credentials');
 
         $this->postJson('/api/auth/admin/login', [
             'email_or_phone' => 'portal-user@example.com',
@@ -186,6 +212,7 @@ class PhaseOneTest extends TestCase
     {
         $user = User::query()->create([
             'name' => 'Reward User',
+            'username' => 'rewarduser',
             'email' => 'reward@example.com',
             'password' => 'reward123',
             'role' => 'user',
@@ -193,7 +220,7 @@ class PhaseOneTest extends TestCase
         ]);
 
         $this->postJson('/api/auth/login', [
-            'email_or_phone' => 'reward@example.com',
+            'username' => 'rewarduser',
             'password' => 'reward123',
         ])->assertOk();
 

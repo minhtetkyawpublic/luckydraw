@@ -500,7 +500,7 @@ function AppShell() {
         initialize();
     }, [api, refreshAppSettings, refreshMe, refreshSpinStatus]);
 
-    const login = async ({ emailOrPhone, password, rememberMe, portalRole = 'user' }) => {
+    const login = async ({ identifier, password, rememberMe, portalRole = 'user' }) => {
         await axios.get(`${basePath}/sanctum/csrf-cookie`, {
             withCredentials: true,
             headers: {
@@ -508,8 +508,11 @@ function AppShell() {
             },
         });
         const endpoint = portalRole === 'admin' ? '/auth/admin/login' : '/auth/login';
+        const credentials = portalRole === 'admin'
+            ? { email_or_phone: normalizeEmailOrPhone(identifier) }
+            : { username: String(identifier || '').trim().toLowerCase() };
         const response = await api.post(endpoint, {
-            email_or_phone: normalizeEmailOrPhone(emailOrPhone),
+            ...credentials,
             password,
             remember_me: rememberMe,
         });
@@ -711,7 +714,7 @@ function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
     const navigate = useNavigate();
     const isAdminPortal = portalRole === 'admin';
     const [form, setForm] = useState({
-        emailOrPhone: '',
+        identifier: '',
         password: '',
         rememberMe: true,
     });
@@ -756,13 +759,13 @@ function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
                     <form className="login-form" onSubmit={onSubmit}>
                         <label className="login-input-wrap">
                             <AppIcon name="user" size={24} />
-                            <span className="sr-only">Email or phone</span>
+                            <span className="sr-only">{isAdminPortal ? 'Email or phone' : 'Username'}</span>
                             <input
-                                value={form.emailOrPhone}
+                                value={form.identifier}
                                 onChange={(event) =>
-                                    setForm((prev) => ({ ...prev, emailOrPhone: event.target.value }))
+                                    setForm((prev) => ({ ...prev, identifier: event.target.value }))
                                 }
-                                placeholder="Email or phone"
+                                placeholder={isAdminPortal ? 'Email or phone' : 'Username'}
                                 autoComplete="username"
                                 required
                             />
@@ -895,6 +898,7 @@ function DashboardScreen() {
                 <div>
                     <span>Account</span>
                     <strong>{me?.name || me?.email || 'Lucky Draw player'}</strong>
+                    {me?.username ? <small>@{me.username}</small> : null}
                     <small>{spinStatus?.can_free_spin_today ? 'Free spin ready today' : 'Free spin used today'}</small>
                 </div>
             </section>
@@ -1039,7 +1043,7 @@ function SettingsScreen() {
                 <div className="profile-details">
                     <span>Your account</span>
                     <strong>{me?.name || 'Lucky Draw player'}</strong>
-                    <p>{me?.email || me?.phone || 'Member account'}</p>
+                    <p>{me?.username ? `@${me.username}` : 'Member account'}</p>
                     <div><AppIcon name="coin" size={20} /> {formatPoints(spinStatus?.wallet_balance || 0)} points</div>
                 </div>
             </section>
@@ -1681,8 +1685,7 @@ function AdminUsersScreen() {
     const [newPassword, setNewPassword] = useState('');
     const [createUser, setCreateUser] = useState({
         name: '',
-        email: '',
-        phone: '',
+        username: '',
         password: '',
     });
     const [loading, setLoading] = useState(false);
@@ -1724,8 +1727,7 @@ function AdminUsersScreen() {
             });
             setCreateUser({
                 name: '',
-                email: '',
-                phone: '',
+                username: '',
                 password: '',
             });
             setCreateModalOpen(false);
@@ -1799,7 +1801,7 @@ function AdminUsersScreen() {
                         type="search"
                         enterKeyHint="search"
                         value={query}
-                        placeholder="Search name / email / phone"
+                        placeholder="Search name / username"
                         onChange={(event) => setQuery(event.target.value)}
                     />
                     <select value={statusFilter} onChange={(event) => {
@@ -1821,7 +1823,7 @@ function AdminUsersScreen() {
                                 <button className="admin-user-row-button" type="button" onClick={() => navigate(`/admin/users/${user.id}`)}>
                                 <div className="admin-user-summary">
                                     <span className={`admin-status-dot ${user.status}`} />
-                                    <span><strong>{user.name}</strong><small>{user.email || user.phone || `User #${user.id}`}</small></span>
+                                    <span><strong>{user.name}</strong><small>@{user.username}</small></span>
                                     <strong>{formatPoints(user.wallet_balance)} pts</strong>
                                     <AppIcon name="arrow" size={16} />
                                 </div>
@@ -1858,16 +1860,15 @@ function AdminUsersScreen() {
                     />
                     <input
                         className="input"
-                        placeholder="Email"
-                        value={createUser.email}
-                        onChange={(event) => setCreateUser((prev) => ({ ...prev, email: event.target.value }))}
+                        placeholder="Username"
+                        value={createUser.username}
+                        onChange={(event) => setCreateUser((prev) => ({ ...prev, username: event.target.value.toLowerCase() }))}
+                        minLength="3"
+                        maxLength="50"
+                        pattern="[A-Za-z0-9._-]+"
+                        autoCapitalize="none"
+                        autoCorrect="off"
                         required
-                    />
-                    <input
-                        className="input"
-                        placeholder="Phone"
-                        value={createUser.phone}
-                        onChange={(event) => setCreateUser((prev) => ({ ...prev, phone: event.target.value }))}
                     />
                     <input
                         className="input"
@@ -1887,7 +1888,7 @@ function AdminUsersScreen() {
             <AdminModal
                 open={!!accountModalUser}
                 title={accountModalUser?.name || 'User account'}
-                subtitle={accountModalUser?.email || accountModalUser?.phone || ''}
+                subtitle={accountModalUser?.username ? `@${accountModalUser.username}` : ''}
                 onClose={() => setAccountModalUser(null)}
             >
                 {accountModalUser ? (
@@ -1976,7 +1977,7 @@ function AdminUserRecordsScreen() {
     const [pointModalOpen, setPointModalOpen] = useState(false);
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
     const [accountModalOpen, setAccountModalOpen] = useState(false);
-    const [accountForm, setAccountForm] = useState({ name: '', email: '', phone: '' });
+    const [accountForm, setAccountForm] = useState({ name: '', username: '', email: '', phone: '' });
     const [adjustAmount, setAdjustAmount] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -1994,6 +1995,7 @@ function AdminUserRecordsScreen() {
             setUser(response.data.user);
             setAccountForm({
                 name: response.data.user?.name || '',
+                username: response.data.user?.username || '',
                 email: response.data.user?.email || '',
                 phone: response.data.user?.phone || '',
             });
@@ -2051,7 +2053,8 @@ function AdminUserRecordsScreen() {
         try {
             await api.patch(`/admin/users/${userId}`, {
                 name: accountForm.name,
-                email: accountForm.email,
+                username: accountForm.username,
+                email: accountForm.email || null,
                 phone: accountForm.phone || null,
             });
             setAccountModalOpen(false);
@@ -2088,7 +2091,7 @@ function AdminUserRecordsScreen() {
                         <div>
                             <span className={`admin-status-dot ${user.status}`} />
                             <strong>{user.name}</strong>
-                            <small>{user.email || user.phone || `User #${user.id}`}</small>
+                            <small>@{user.username}</small>
                         </div>
                         <strong>{formatPoints(user.wallet_balance)} pts</strong>
                     </section>
@@ -2173,8 +2176,12 @@ function AdminUserRecordsScreen() {
                         <input className="input" value={accountForm.name} onChange={(event) => setAccountForm((current) => ({ ...current, name: event.target.value }))} required autoFocus />
                     </label>
                     <label>
-                        <span>Email</span>
-                        <input className="input" type="email" value={accountForm.email} onChange={(event) => setAccountForm((current) => ({ ...current, email: event.target.value }))} required />
+                        <span>Username</span>
+                        <input className="input" value={accountForm.username} onChange={(event) => setAccountForm((current) => ({ ...current, username: event.target.value.toLowerCase() }))} minLength="3" maxLength="50" pattern="[A-Za-z0-9._-]+" autoCapitalize="none" autoCorrect="off" required />
+                    </label>
+                    <label>
+                        <span>Email (optional)</span>
+                        <input className="input" type="email" value={accountForm.email} onChange={(event) => setAccountForm((current) => ({ ...current, email: event.target.value }))} />
                     </label>
                     <label>
                         <span>Phone number</span>

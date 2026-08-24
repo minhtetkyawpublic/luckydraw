@@ -155,21 +155,28 @@ class PhaseTwoTest extends TestCase
 
         $this->patchJson("/api/admin/users/{$user->id}", [
             'name' => 'Updated Target User',
+            'username' => 'updatedtarget',
             'email' => 'updated-target@example.com',
             'phone' => '09999999999',
         ])->assertOk()
             ->assertJsonPath('user.name', 'Updated Target User')
+            ->assertJsonPath('user.username', 'updatedtarget')
             ->assertJsonPath('user.email', 'updated-target@example.com')
             ->assertJsonPath('user.phone', '09999999999');
 
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
+            'username' => 'updatedtarget',
             'email' => 'updated-target@example.com',
             'phone' => '09999999999',
         ]);
 
         $disabledList = $this->getJson('/api/admin/users?status=disabled');
         $disabledList->assertOk()->assertJsonFragment(['email' => 'updated-target@example.com']);
+
+        $this->getJson('/api/admin/users?q=updatedtarget')
+            ->assertOk()
+            ->assertJsonPath('users.0.username', 'updatedtarget');
     }
 
     public function test_admin_can_open_user_records_with_paginated_transactions(): void
@@ -411,9 +418,12 @@ class PhaseTwoTest extends TestCase
 
     protected function createBasicUser(array $overrides = []): User
     {
+        $suffix = random_int(1000, 9999);
+
         return User::query()->create(array_merge([
             'name' => 'Phase Two User',
-            'email' => 'phase2-user-'.random_int(1000, 9999).'@example.com',
+            'username' => 'phase2user'.$suffix,
+            'email' => 'phase2-user-'.$suffix.'@example.com',
             'password' => 'password123',
             'role' => 'user',
             'status' => 'active',
@@ -435,7 +445,7 @@ class PhaseTwoTest extends TestCase
     {
         $endpoint = $user->isAdmin() ? '/api/auth/admin/login' : '/api/auth/login';
         $response = $this->postJson($endpoint, [
-            'email_or_phone' => $user->email,
+            ($user->isAdmin() ? 'email_or_phone' : 'username') => $user->isAdmin() ? $user->email : $user->username,
             'password' => 'password123',
         ]);
 

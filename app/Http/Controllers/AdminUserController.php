@@ -44,6 +44,7 @@ class AdminUserController extends Controller
         if ($q !== '') {
             $query->where(function ($builder) use ($q) {
                 $builder->where('name', 'like', "%{$q}%")
+                    ->orWhere('username', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
                     ->orWhere('phone', 'like', "%{$q}%");
             });
@@ -58,6 +59,7 @@ class AdminUserController extends Controller
         $rows = $users->through(fn (User $user) => [
             'id' => $user->id,
             'name' => $user->name,
+            'username' => $user->username,
             'email' => $user->email,
             'phone' => $user->phone,
             'role' => $user->role,
@@ -119,6 +121,7 @@ class AdminUserController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
+                'username' => $user->username,
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'role' => $user->role,
@@ -145,6 +148,7 @@ class AdminUserController extends Controller
         if ($q !== '') {
             $query->where(function ($builder) use ($q) {
                 $builder->where('name', 'like', "%{$q}%")
+                    ->orWhere('username', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
                     ->orWhere('phone', 'like', "%{$q}%");
             });
@@ -156,12 +160,13 @@ class AdminUserController extends Controller
         $users = $query->orderByDesc('id')->get();
 
         $rows = [
-            ['id', 'name', 'email', 'phone', 'role', 'status', 'wallet_balance', 'created_at'],
+            ['id', 'name', 'username', 'email', 'phone', 'role', 'status', 'wallet_balance', 'created_at'],
         ];
         foreach ($users as $user) {
             $rows[] = [
                 $user->id,
                 $user->name,
+                $user->username,
                 $user->email,
                 $user->phone,
                 $user->role,
@@ -195,15 +200,21 @@ class AdminUserController extends Controller
     {
         abort_if($user->isAdmin(), 403, 'The administrator account is managed from Admin Settings.');
 
+        if ($request->has('username')) {
+            $request->merge(['username' => strtolower(trim((string) $request->input('username')))]);
+        }
+
         $data = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:users,email,'.$user->id,
+            'username' => ['sometimes', 'required', 'string', 'min:3', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:users,username,'.$user->id],
+            'email' => 'sometimes|nullable|email|unique:users,email,'.$user->id,
             'phone' => 'sometimes|nullable|string|max:50|unique:users,phone,'.$user->id,
             'status' => 'sometimes|in:active,disabled',
             'status_note' => 'nullable|string|max:1000',
         ]);
 
-        $shouldRevokeSessions = ($data['status'] ?? null) === 'disabled' && $user->status !== 'disabled';
+        $shouldRevokeSessions = (($data['status'] ?? null) === 'disabled' && $user->status !== 'disabled')
+            || (isset($data['username']) && $data['username'] !== $user->username);
         $user->update($data);
 
         if ($shouldRevokeSessions) {
@@ -229,6 +240,7 @@ class AdminUserController extends Controller
             'user' => $user->only([
                 'id',
                 'name',
+                'username',
                 'email',
                 'phone',
                 'role',
@@ -272,17 +284,19 @@ class AdminUserController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $request->merge(['username' => strtolower(trim((string) $request->input('username')))]);
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'phone' => 'nullable|string|max:50|unique:users,phone',
+            'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:users,username'],
             'password' => ['required', 'string', Password::defaults()],
         ]);
 
         $user = User::query()->create([
             'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'] ?? null,
+            'username' => $data['username'],
+            'email' => null,
+            'phone' => null,
             'password' => $data['password'],
             'role' => 'user',
             'status' => 'active',
@@ -298,7 +312,7 @@ class AdminUserController extends Controller
             'subject_id' => $user->id,
             'metadata' => [
                 'name' => $user->name,
-                'email' => $user->email,
+                'username' => $user->username,
                 'role' => $user->role,
             ],
             'ip_address' => $request->ip(),
@@ -307,7 +321,7 @@ class AdminUserController extends Controller
 
         return response()->json([
             'message' => 'User created',
-            'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'status']),
+            'user' => $user->only(['id', 'name', 'username', 'email', 'phone', 'role', 'status']),
             'wallet' => $wallet->only(['id', 'balance']),
         ], 201);
     }

@@ -12,30 +12,30 @@ class AuthService
     public function login(array $data, string $expectedRole): User
     {
         $remember = (bool) ($data['remember_me'] ?? false);
-        $identifier = trim((string) ($data['email_or_phone'] ?? ''));
+        $field = $expectedRole === 'admin' ? 'email_or_phone' : 'username';
+        $identifier = trim((string) ($data[$field] ?? ''));
         $password = $data['password'] ?? '';
 
-        $user = User::query()
-            ->where('email', $identifier)
-            ->orWhere('phone', $identifier)
-            ->first();
+        $user = $expectedRole === 'admin'
+            ? User::query()->where('email', $identifier)->orWhere('phone', $identifier)->first()
+            : User::query()->where('username', strtolower($identifier))->first();
 
         if (! $user || ! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
-                'email_or_phone' => 'The provided credentials are incorrect.',
+                $field => 'The provided credentials are incorrect.',
             ]);
         }
 
         if ($user->role !== $expectedRole) {
             $portal = $user->isAdmin() ? 'administrator portal' : 'user app';
             throw ValidationException::withMessages([
-                'email_or_phone' => "This account belongs to the {$portal}.",
+                $field => "This account belongs to the {$portal}.",
             ]);
         }
 
         if ($user->status !== 'active') {
             throw ValidationException::withMessages([
-                'email_or_phone' => 'Your account is not active.',
+                $field => 'Your account is not active.',
             ]);
         }
 

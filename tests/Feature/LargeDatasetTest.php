@@ -29,6 +29,7 @@ class LargeDatasetTest extends TestCase
         for ($index = 1; $index <= 1200; $index++) {
             $rows[] = [
                 'name' => "Player {$index}",
+                'username' => "player{$index}",
                 'email' => "player-{$index}@example.com",
                 'phone' => '09'.str_pad((string) $index, 9, '0', STR_PAD_LEFT),
                 'password' => $password,
