@@ -81,6 +81,8 @@ function AppIcon({ name, size = 24, strokeWidth = 2.2 }) {
         history: <><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></>,
         wheel: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2" /><path d="m12 3 1.5 7.2M20.6 9l-6.8 2.4M17.3 19l-4.2-5.5M6.7 19l4.2-5.5M3.4 9l6.8 2.4" /></>,
         settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" /></>,
+        content: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
+        shield: <><path d="M12 3 5 6v5c0 4.8 2.8 8 7 10 4.2-2 7-5.2 7-10V6l-7-3Z" /><path d="m9.5 12 1.7 1.7 3.5-3.7" /></>,
         arrow: <><path d="m9 18 6-6-6-6" /></>,
         logout: <><path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10" /></>,
         sound: <><path d="M5 10H2v4h3l4 3V7l-4 3Z" /><path d="M13 9a4 4 0 0 1 0 6M16 6a8 8 0 0 1 0 12" /></>,
@@ -797,9 +799,9 @@ function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
                             {submitting ? 'Signing in…' : (isAdminPortal ? 'Admin Login' : 'User Login')}
                         </button>
                     </form>
-                    <NavLink className="portal-switch-link" to={isAdminPortal ? '/login' : '/admin/login'}>
-                        {isAdminPortal ? 'Go to user login' : 'Administrator login'}
-                    </NavLink>
+                    {isAdminPortal ? (
+                        <NavLink className="portal-switch-link" to="/login">Go to user login</NavLink>
+                    ) : null}
                     <div className="login-follow">
                         <span />
                         <p>follow for more</p>
@@ -1653,10 +1655,10 @@ function AdminDashboardScreen() {
                 <div><span>Administration</span><h1>Overview</h1></div>
             </div>
             <nav className="admin-quick-grid" aria-label="Primary admin actions">
-                <NavLink to="/admin/users"><AppIcon name="user" size={22} /><span><strong>Users</strong><small>Accounts & points</small></span><AppIcon name="arrow" size={17} /></NavLink>
-                <NavLink to="/admin/spin-config"><AppIcon name="wheel" size={22} /><span><strong>Wheel</strong><small>Rewards & cost</small></span><AppIcon name="arrow" size={17} /></NavLink>
-                <NavLink to="/admin/app-settings"><AppIcon name="settings" size={22} /><span><strong>App content</strong><small>Links & Home</small></span><AppIcon name="arrow" size={17} /></NavLink>
-                <NavLink to="/admin/settings"><AppIcon name="user" size={22} /><span><strong>Admin account</strong><small>Profile & password</small></span><AppIcon name="arrow" size={17} /></NavLink>
+                <NavLink className="admin-quick-card users" to="/admin/users"><AppIcon name="user" size={24} /><span><strong>Users</strong><small>Accounts & points</small></span><AppIcon name="arrow" size={16} /></NavLink>
+                <NavLink className="admin-quick-card wheel" to="/admin/spin-config"><AppIcon name="wheel" size={24} /><span><strong>Wheel</strong><small>Rewards & cost</small></span><AppIcon name="arrow" size={16} /></NavLink>
+                <NavLink className="admin-quick-card content" to="/admin/app-settings"><AppIcon name="content" size={24} /><span><strong>App content</strong><small>Login, links & Home</small></span><AppIcon name="arrow" size={16} /></NavLink>
+                <NavLink className="admin-quick-card account" to="/admin/settings"><AppIcon name="shield" size={24} /><span><strong>Admin account</strong><small>Profile & password</small></span><AppIcon name="arrow" size={16} /></NavLink>
             </nav>
         </main>
     );
