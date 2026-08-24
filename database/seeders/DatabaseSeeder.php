@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
         User::updateOrCreate(
             ['email' => $adminEmail],
             [
-                'name' => config('luckydraw.seed_admin_name', 'Lucky Draw Admin'),
+                'name' => config('luckydraw.seed_admin_name', 'မောင်းဘုရင် Admin'),
                 'password' => $adminPassword,
                 'role' => 'admin',
                 'status' => 'active',

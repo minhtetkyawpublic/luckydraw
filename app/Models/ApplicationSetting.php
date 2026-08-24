@@ -38,10 +38,10 @@ class ApplicationSetting extends Model
             'telegram_channel_url' => null,
             'facebook_page_url' => null,
             'tiktok_channel_url' => null,
-            'about_content' => 'Lucky Draw is a points-only spin wheel app.',
+            'about_content' => 'မောင်းဘုရင် is a points-only Lucky Draw Wheel app.',
             'buy_points_instructions' => "To buy points, contact the administrator outside this app.\nSend your username or phone number, complete payment with the admin, and your wallet points will be added manually.",
             'daily_bonus_points' => 20,
-            'home_ticker_text' => 'Welcome to Lucky Draw • One free spin every day • Points-only rewards • Contact admin to exchange or buy points',
+            'home_ticker_text' => 'Welcome to မောင်းဘုရင် • One free spin every day • Points-only rewards • Contact admin to exchange or buy points',
             'home_board_text' => "One free spin every day\nPoints-only wheel rewards\nPaid spins use wallet points\nDaily bonus available once\nAll activity is recorded\nContact admin for points",
         ];
     }

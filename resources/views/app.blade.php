@@ -9,8 +9,8 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="theme-color" content="#ff6500">
         <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'Lucky Draw') }}">
-        <title>{{ config('app.name', 'Lucky Draw') }}</title>
+        <meta name="apple-mobile-web-app-title" content="မောင်းဘုရင်">
+        <title>မောင်းဘုရင်</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
         <link rel="manifest" href="{{ $configuredBasePath }}/manifest.webmanifest">

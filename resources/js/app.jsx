@@ -44,7 +44,73 @@ const AuthContext = createContext({
     pushToast: () => {},
     login: async () => {},
     logout: async () => {},
+    language: 'en',
+    setLanguage: () => {},
+    t: (key) => key,
 });
+
+const PLAYER_COPY = {
+    en: {
+        home: 'Home', play: 'Play', settings: 'Settings', points: 'points',
+        notifications_empty: 'You have no new notifications',
+        welcome: 'Welcome to Maung Bayin', login_intro: 'Sign in to collect points and spin.',
+        member_access: 'Member access', user_login: 'User Login', username: 'Username', password: 'Password',
+        remember_me: 'Remember me', signing_in: 'Signing in…', create_account: 'Create account with Telegram',
+        follow_more: 'follow for more', accounts_by_admin: 'Accounts are provided by the administrator.',
+        current_points: 'Current points', account: 'Account', member_account: 'Member account',
+        free_ready: 'Free spin ready today', free_used: 'Free spin used today', outside_website: 'Outside website',
+        partner_continue: 'Open the partner website to continue.', contact_admin: 'Contact administrator',
+        exchange_points: 'Exchange points', phone_numbers: 'Phone numbers', loading_account: 'Loading your account…',
+        point_store: 'Point store', buy_points: 'Buy points', how_buy: 'How to buy points', back_home: 'Back to home',
+        your_account: 'Your account', account_gameplay: 'Account & gameplay', spin_wheel: 'Lucky Draw Wheel',
+        daily_bonus: 'Daily bonus', transaction_history: 'Transaction history', language: 'Language',
+        english: 'English', burmese: 'မြန်မာ', connect: 'Connect', telegram_channel: 'Telegram channel',
+        facebook_page: 'Facebook page', tiktok_channel: 'TikTok channel', about_app: 'About this app',
+        logout: 'Logout', logging_out: 'Logging out…', close: 'Close', amount: 'Amount', balance_after: 'Balance after',
+        date_time: 'Date & time', note: 'Note', reward: 'Reward', spin_cost: 'Spin cost', wheel_segment: 'Wheel segment',
+        history: 'History', all: 'All', apply_filters: 'Apply filters', refresh: 'Refresh', loading: 'Loading…',
+        no_transactions: 'No transactions yet.', previous: 'Prev', next: 'Next', daily_claim_once: 'One free claim each day.',
+        claim_now: 'Claim Now', claiming: 'Claiming…', wheel_points_only: 'Wheel rewards are points-only.',
+        need_points: 'Need more points?', buy_from_admin: 'Buy points from admin', buy: 'Buy', daily_checkin: 'Daily check in',
+        ready: 'Ready', claimed: 'Claimed', claim_points: 'Claim points', claimed_today: 'Claimed today',
+        free_spin: 'Free Spin', paid_spin: 'Paid Spin', not_enough: 'Not enough points', spinning: 'Spinning', today: 'Today',
+        buy_points_short: 'Buy points', won: 'You won!', new_balance: 'New balance', awesome: 'Awesome!',
+        tx_daily_bonus: 'Daily bonus', tx_free_spin_reward: 'Free spin reward', tx_paid_spin_reward: 'Paid spin reward',
+        tx_spin_spend: 'Paid spin cost', tx_admin_adjustment: 'Points adjustment',
+    },
+    my: {
+        home: 'ပင်မ', play: 'ကစားရန်', settings: 'ဆက်တင်', points: 'ပွိုင့်',
+        notifications_empty: 'အကြောင်းကြားချက်အသစ် မရှိပါ',
+        welcome: 'မောင်းဘုရင်မှ ကြိုဆိုပါသည်', login_intro: 'ပွိုင့်ရယူပြီး ကံစမ်းရန် အကောင့်ဝင်ပါ။',
+        member_access: 'အသင်းဝင်', user_login: 'အကောင့်ဝင်ရန်', username: 'အသုံးပြုသူအမည်', password: 'စကားဝှက်',
+        remember_me: 'အကောင့်ကို မှတ်ထားမည်', signing_in: 'ဝင်ရောက်နေသည်…', create_account: 'Telegram မှ အကောင့်ဖွင့်ရန်',
+        follow_more: 'နောက်ထပ်ကြည့်ရှုရန်', accounts_by_admin: 'အကောင့်များကို စီမံသူထံမှ ရယူနိုင်ပါသည်။',
+        current_points: 'လက်ရှိပွိုင့်', account: 'အကောင့်', member_account: 'အသင်းဝင်အကောင့်',
+        free_ready: 'ယနေ့ အခမဲ့ကံစမ်းနိုင်သည်', free_used: 'ယနေ့ အခမဲ့ကံစမ်းပြီးပါပြီ', outside_website: 'ပြင်ပဝဘ်ဆိုက်',
+        partner_continue: 'ဆက်ကစားရန် ဝဘ်ဆိုက်ကိုဖွင့်ပါ။', contact_admin: 'စီမံသူကို ဆက်သွယ်ရန်',
+        exchange_points: 'ပွိုင့်လဲလှယ်ရန်', phone_numbers: 'ဖုန်းနံပါတ်များ', loading_account: 'အကောင့်ကို ဖွင့်နေသည်…',
+        point_store: 'ပွိုင့်ဆိုင်', buy_points: 'ပွိုင့်ဝယ်ရန်', how_buy: 'ပွိုင့်ဝယ်ယူနည်း', back_home: 'ပင်မသို့ပြန်ရန်',
+        your_account: 'သင့်အကောင့်', account_gameplay: 'အကောင့်နှင့် ကစားနည်း', spin_wheel: 'ကံစမ်းလှည့်ဘီး',
+        daily_bonus: 'နေ့စဉ်ဆု', transaction_history: 'ပွိုင့်မှတ်တမ်း', language: 'ဘာသာစကား',
+        english: 'English', burmese: 'မြန်မာ', connect: 'ဆက်သွယ်ရန်', telegram_channel: 'Telegram ချန်နယ်',
+        facebook_page: 'Facebook စာမျက်နှာ', tiktok_channel: 'TikTok ချန်နယ်', about_app: 'အက်ပ်အကြောင်း',
+        logout: 'အကောင့်ထွက်ရန်', logging_out: 'ထွက်နေသည်…', close: 'ပိတ်ရန်', amount: 'ပမာဏ', balance_after: 'လက်ကျန်ပွိုင့်',
+        date_time: 'နေ့ရက်နှင့်အချိန်', note: 'မှတ်ချက်', reward: 'ရရှိသည့်ပွိုင့်', spin_cost: 'အသုံးပြုပွိုင့်', wheel_segment: 'ရလဒ်',
+        history: 'မှတ်တမ်း', all: 'အားလုံး', apply_filters: 'စစ်ထုတ်ရန်', refresh: 'ပြန်ဖွင့်ရန်', loading: 'ဖွင့်နေသည်…',
+        no_transactions: 'မှတ်တမ်းမရှိသေးပါ။', previous: 'ရှေ့', next: 'နောက်', daily_claim_once: 'တစ်ရက်လျှင် တစ်ကြိမ် ရယူနိုင်သည်။',
+        claim_now: 'ရယူရန်', claiming: 'ရယူနေသည်…', wheel_points_only: 'ကံစမ်းလှည့်ဘီးမှ ပွိုင့်များသာ ရရှိမည်။',
+        need_points: 'ပွိုင့်လိုပါသလား?', buy_from_admin: 'စီမံသူထံမှ ပွိုင့်ဝယ်ပါ', buy: 'ဝယ်ရန်', daily_checkin: 'နေ့စဉ်ပွိုင့်',
+        ready: 'ရယူနိုင်သည်', claimed: 'ရယူပြီး', claim_points: 'ပွိုင့်ရယူရန်', claimed_today: 'ယနေ့ ရယူပြီး',
+        free_spin: 'အခမဲ့လှည့်ရန်', paid_spin: 'ပွိုင့်ဖြင့်လှည့်ရန်', not_enough: 'ပွိုင့်မလောက်ပါ', spinning: 'လှည့်နေသည်', today: 'ယနေ့',
+        buy_points_short: 'ပွိုင့်ဝယ်ရန်', won: 'ဆုရရှိပါသည်!', new_balance: 'လက်ကျန်ပွိုင့်', awesome: 'အိုကေ',
+        tx_daily_bonus: 'နေ့စဉ်ဆု', tx_free_spin_reward: 'အခမဲ့ကံစမ်းဆု', tx_paid_spin_reward: 'ပွိုင့်ကံစမ်းဆု',
+        tx_spin_spend: 'ကံစမ်းအသုံးပြုပွိုင့်', tx_admin_adjustment: 'စီမံသူပြင်ဆင်ပွိုင့်',
+    },
+};
+
+function playerTranslate(language, key) {
+    return PLAYER_COPY[language]?.[key] || PLAYER_COPY.en[key] || key;
+}
 
 function resolveClientBase() {
     const pathname = new URL(import.meta.url).pathname;
@@ -105,6 +171,15 @@ function AppIcon({ name, size = 24, strokeWidth = 2.2 }) {
         </svg>
     );
 }
+
+function SocialIcon({ name, size = 26 }) {
+    const paths = {
+        facebook: <path d="M14.3 8.3h3V4.2c-.5-.1-2.2-.2-4.1-.2-4 0-6.7 2.4-6.7 6.9v3.8H2v4.6h4.5V31h5.6V19.3h4.6l.7-4.6h-5.3v-3.3c0-1.3.4-2.3 2.2-2.3Z" />,
+        telegram: <path d="M29.2 3.2 2.9 13.4c-1.8.7-1.8 1.7-.3 2.2l6.8 2.1 2.6 8c.3.9.2 1.3 1.1 1.3.7 0 1-.3 1.4-.7l3.3-3.2 6.9 5.1c1.3.7 2.2.3 2.5-1.2l4.5-21.2c.5-1.9-.7-2.8-2.5-2.1ZM11.1 17.2l15.3-9.7c.8-.5 1.5-.2.9.3L14.7 19.2l-.5 5.2-3.1-7.2Z" />,
+        tiktok: <path d="M23.6 7.1a7.5 7.5 0 0 1-4.4-4V3h-4.8v18.1a3.8 3.8 0 1 1-3.3-3.8c.4 0 .8.1 1.2.2v-4.9a8.6 8.6 0 1 0 6.9 8.5v-9.2a12.1 12.1 0 0 0 7.1 2.3V9.4a7.5 7.5 0 0 1-2.7-.5V7.1Z" />,
+    };
+    return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 32 32" fill="currentColor">{paths[name]}</svg>;
+}
 function formatPoints(value) {
     return new Intl.NumberFormat('en-US').format(Number(value) || 0);
 }
@@ -131,10 +206,10 @@ const DEFAULT_APP_SETTINGS = {
     telegram_channel_url: '',
     facebook_page_url: '',
     tiktok_channel_url: '',
-    about_content: 'Lucky Draw is a points-only spin wheel app.',
+    about_content: 'မောင်းဘုရင် is a points-only Lucky Draw Wheel app.',
     buy_points_instructions: 'To buy points, contact the administrator outside this app.\nSend your username or phone number, complete payment with the admin, and your wallet points will be added manually.',
     daily_bonus_points: 20,
-    home_ticker_text: 'Welcome to Lucky Draw • One free spin every day • Points-only rewards • Contact admin to exchange or buy points',
+    home_ticker_text: 'Welcome to မောင်းဘုရင် • One free spin every day • Points-only rewards • Contact admin to exchange or buy points',
     home_board_text: 'One free spin every day\nPoints-only wheel rewards\nPaid spins use wallet points\nDaily bonus available once\nAll activity is recorded\nContact admin for points',
 };
 
@@ -151,16 +226,17 @@ function splitSettingLines(value) {
 }
 
 function UserHeader({ onNotify }) {
+    const { t } = useContext(AuthContext);
     return (
         <header className="user-header">
             <div className="brand-lockup">
-                <img src="logotransparent.png" alt="Lucky Draw" />
+                <img src="logotransparent.png" alt="မောင်းဘုရင်" />
                 <div>
-                    <strong>Lucky Draw</strong>
+                    <strong>မောင်းဘုရင်</strong>
                     <span>Play • Collect • Enjoy</span>
                 </div>
             </div>
-            <button className="icon-button" type="button" aria-label="Notifications" onClick={onNotify}>
+            <button className="icon-button" type="button" aria-label={t('notifications_empty')} onClick={onNotify}>
                 <AppIcon name="bell" size={23} />
             </button>
         </header>
@@ -168,11 +244,12 @@ function UserHeader({ onNotify }) {
 }
 
 function BalancePill({ balance = 0 }) {
+    const { t } = useContext(AuthContext);
     return (
         <div className="balance-pill">
             <AppIcon name="coin" size={22} />
             <strong>{formatPoints(balance)}</strong>
-            <span>points</span>
+            <span>{t('points')}</span>
         </div>
     );
 }
@@ -224,28 +301,31 @@ function resolveSpinBlockMessage(payload, actionType = 'paid') {
 }
 
 function TransactionDetailSheet({ record, onClose }) {
+    const { language, t } = useContext(AuthContext);
     if (!record) {
         return null;
     }
 
-    const title = record.transaction_type
-        ? `${record.transaction_type} #${record.id}`
-        : `Record #${record.id}`;
+    const transactionType = record.type || record.transaction_type;
+    const translatedType = t(`tx_${transactionType}`);
+    const title = translatedType === `tx_${transactionType}`
+        ? humanizeTransactionType(transactionType)
+        : translatedType;
+    const amount = record.amount ?? null;
+    const date = record.created_at
+        ? new Date(record.created_at).toLocaleString(language === 'my' ? 'my-MM' : 'en-US')
+        : null;
     const lines = [
-        ['id', record.id],
-        ['type', record.type || record.transaction_type],
-        ['amount', record.amount],
-        ['balance_after', record.balance_after],
-        ['reference_type', record.reference_type || 'n/a'],
-        ['reference_id', record.reference_id || 'n/a'],
-        ['points_spent', record.points_spent],
-        ['points_awarded', record.points_awarded],
-        ['segment', record.spin_segment_label || 'n/a'],
-        ['segment_id', record.spin_segment_id || 'n/a'],
-        ['free_spin', record.is_free_spin ? 'yes' : 'no'],
-        ['created_at', record.created_at],
-        ['notes', record.notes || ''],
-    ];
+        amount !== null ? [t('amount'), `${amount > 0 ? '+' : ''}${formatPoints(amount)} ${t('points')}`] : null,
+        record.points_spent != null ? [t('spin_cost'), `${formatPoints(record.points_spent)} ${t('points')}`] : null,
+        record.points_awarded != null ? [t('reward'), `+${formatPoints(record.points_awarded)} ${t('points')}`] : null,
+        record.balance_after != null ? [t('balance_after'), `${formatPoints(record.balance_after)} ${t('points')}`] : null,
+        record.spin_segment_label ? [t('wheel_segment'), record.spin_segment_label] : null,
+        date ? [t('date_time'), date] : null,
+        record.notes && record.notes.trim().toLowerCase() !== title.trim().toLowerCase()
+            ? [t('note'), record.notes]
+            : null,
+    ].filter(Boolean);
 
     return (
         <div className="detail-overlay" role="dialog" aria-modal="true">
@@ -253,7 +333,7 @@ function TransactionDetailSheet({ record, onClose }) {
                 <div className="detail-header">
                     <strong>{title}</strong>
                     <button className="btn secondary" type="button" onClick={onClose}>
-                        Close
+                        {t('close')}
                     </button>
                 </div>
                 <div className="detail-body">
@@ -262,10 +342,6 @@ function TransactionDetailSheet({ record, onClose }) {
                             <strong>{label}:</strong> {String(value)}
                         </p>
                     ))}
-                    <details className="detail-json">
-                        <summary>Raw payload</summary>
-                        <pre>{JSON.stringify(record, null, 2)}</pre>
-                    </details>
                 </div>
             </div>
         </div>
@@ -409,8 +485,8 @@ function AdminLayout({ children }) {
         <div className="admin-shell">
             <header className="admin-mobile-header">
                 <NavLink className="admin-brand" to="/admin">
-                    <img src={`${basePath}/logotransparent.png`} alt="Lucky Draw" />
-                    <span><strong>Lucky Draw</strong><small>Admin</small></span>
+                    <img src={`${basePath}/logotransparent.png`} alt="မောင်းဘုရင်" />
+                    <span><strong>မောင်းဘုရင်</strong><small>Admin</small></span>
                 </NavLink>
                 <button className="admin-header-logout" type="button" onClick={signOut} disabled={signingOut}>
                     {signingOut ? 'Wait…' : 'Logout'}
@@ -437,6 +513,22 @@ function AppShell() {
     const [spinStatus, setSpinStatus] = useState(null);
     const [appSettings, setAppSettings] = useState(DEFAULT_APP_SETTINGS);
     const [spinStatusLoading, setSpinStatusLoading] = useState(false);
+    const [language, setLanguageState] = useState(() => {
+        const saved = window.localStorage.getItem('maung-bayin-language');
+        return saved === 'my' ? 'my' : 'en';
+    });
+
+    const setLanguage = useCallback((nextLanguage) => {
+        const normalized = nextLanguage === 'my' ? 'my' : 'en';
+        window.localStorage.setItem('maung-bayin-language', normalized);
+        document.documentElement.lang = normalized === 'my' ? 'my' : 'en';
+        setLanguageState(normalized);
+    }, []);
+    const t = useCallback((key) => playerTranslate(language, key), [language]);
+
+    useEffect(() => {
+        document.documentElement.lang = language === 'my' ? 'my' : 'en';
+    }, [language]);
 
     const api = useMemo(() => {
         const client = axios.create({
@@ -545,6 +637,9 @@ function AppShell() {
                 pushToast,
                 login,
                 logout,
+                language,
+                setLanguage,
+                t,
             }}
         >
             {loading ? (
@@ -663,7 +758,7 @@ function AppShell() {
 }
 
 function BottomNav() {
-    const { me } = useContext(AuthContext);
+    const { me, t } = useContext(AuthContext);
     const location = useLocation();
     if (!me || location.pathname === '/login' || location.pathname === '/admin/login') {
         return null;
@@ -694,22 +789,22 @@ function BottomNav() {
         <nav className="bottom-nav" aria-label="Main navigation">
             <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'active' : '')}>
                 <AppIcon name="home" size={25} />
-                <span>Home</span>
+                <span>{t('home')}</span>
             </NavLink>
             <NavLink to="/spin" className={({ isActive }) => (isActive ? 'active' : '')}>
                 <AppIcon name="wheel" size={25} />
-                <span>Play</span>
+                <span>{t('play')}</span>
             </NavLink>
             <NavLink to="/settings" className={({ isActive }) => (isActive ? 'active' : '')}>
                 <AppIcon name="user" size={25} />
-                <span>Settings</span>
+                <span>{t('settings')}</span>
             </NavLink>
         </nav>
     );
 }
 
 function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
-    const { login, pushToast, appSettings } = useContext(AuthContext);
+    const { login, pushToast, appSettings, t } = useContext(AuthContext);
     const { basePath } = useContext(AppBaseContext);
     const navigate = useNavigate();
     const isAdminPortal = portalRole === 'admin';
@@ -747,37 +842,37 @@ function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
     return (
         <main className={`login-page ${isAdminPortal ? 'admin-login-page' : ''}`}>
             <section className="login-brand">
-                <img src={`${basePath}/logotransparent.png`} alt="Lucky Draw logo" />
-                <h1>{isAdminPortal ? 'Lucky Draw Administrator' : 'Welcome to Lucky Draw'}</h1>
-                <p>{isAdminPortal ? 'Manage users, points, wheel and app content.' : 'Sign in to collect points and spin.'}</p>
+                <img src={`${basePath}/logotransparent.png`} alt="မောင်းဘုရင် logo" />
+                <h1>{isAdminPortal ? 'မောင်းဘုရင် Administrator' : t('welcome')}</h1>
+                <p>{isAdminPortal ? 'Manage users, points, wheel and app content.' : t('login_intro')}</p>
             </section>
             <section className="login-panel">
                 <div className="login-panel-inner">
-                    <p className="login-kicker">{isAdminPortal ? 'Administrator access' : 'Member access'}</p>
-                    <h2>{isAdminPortal ? 'Admin Login' : 'User Login'}</h2>
+                    <p className="login-kicker">{isAdminPortal ? 'Administrator access' : t('member_access')}</p>
+                    <h2>{isAdminPortal ? 'Admin Login' : t('user_login')}</h2>
                     {switchingAccount ? <p className="portal-session-note">Sign in below to switch from the currently active account.</p> : null}
                     <form className="login-form" onSubmit={onSubmit}>
                         <label className="login-input-wrap">
                             <AppIcon name="user" size={24} />
-                            <span className="sr-only">{isAdminPortal ? 'Email or phone' : 'Username'}</span>
+                            <span className="sr-only">{isAdminPortal ? 'Email or phone' : t('username')}</span>
                             <input
                                 value={form.identifier}
                                 onChange={(event) =>
                                     setForm((prev) => ({ ...prev, identifier: event.target.value }))
                                 }
-                                placeholder={isAdminPortal ? 'Email or phone' : 'Username'}
+                                placeholder={isAdminPortal ? 'Email or phone' : t('username')}
                                 autoComplete="username"
                                 required
                             />
                         </label>
                         <label className="login-input-wrap">
                             <AppIcon name="lock" size={24} />
-                            <span className="sr-only">Password</span>
+                            <span className="sr-only">{isAdminPortal ? 'Password' : t('password')}</span>
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 value={form.password}
                                 onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
-                                placeholder="Password"
+                                placeholder={isAdminPortal ? 'Password' : t('password')}
                                 autoComplete="current-password"
                                 required
                             />
@@ -790,16 +885,26 @@ function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
                                 <AppIcon name="eye" size={21} />
                             </button>
                         </label>
+                        {!isAdminPortal ? (
+                            <button
+                                className="create-account-link"
+                                type="button"
+                                onClick={() => openSocial(appSettings?.telegram_contact_url, 'Telegram')}
+                            >
+                                <SocialIcon name="telegram" size={18} />
+                                {t('create_account')}
+                            </button>
+                        ) : null}
                         <label className="remember-row">
                             <input
                                 type="checkbox"
                                 checked={form.rememberMe}
                                 onChange={(event) => setForm((prev) => ({ ...prev, rememberMe: event.target.checked }))}
                             />
-                            <span>Remember me</span>
+                            <span>{isAdminPortal ? 'Remember me' : t('remember_me')}</span>
                         </label>
                         <button className="login-button" type="submit" disabled={submitting}>
-                            {submitting ? 'Signing in…' : (isAdminPortal ? 'Admin Login' : 'User Login')}
+                            {submitting ? (isAdminPortal ? 'Signing in…' : t('signing_in')) : (isAdminPortal ? 'Admin Login' : t('user_login'))}
                         </button>
                     </form>
                     {isAdminPortal ? (
@@ -807,15 +912,15 @@ function LoginScreen({ portalRole = 'user', switchingAccount = false }) {
                     ) : null}
                     <div className="login-follow">
                         <span />
-                        <p>follow for more</p>
+                        <p>{isAdminPortal ? 'follow for more' : t('follow_more')}</p>
                         <span />
                     </div>
                     <div className="social-row" aria-label="Social links">
-                        <button type="button" aria-label="Facebook" onClick={() => openSocial(appSettings?.facebook_page_url, 'Facebook')}>f</button>
-                        <button type="button" aria-label="Telegram" onClick={() => openSocial(appSettings?.telegram_channel_url, 'Telegram')}>✈</button>
-                        <button type="button" aria-label="TikTok" onClick={() => openSocial(appSettings?.tiktok_channel_url, 'TikTok')}>♪</button>
+                        <button className="facebook" type="button" aria-label="Facebook" onClick={() => openSocial(appSettings?.facebook_page_url, 'Facebook')}><SocialIcon name="facebook" /></button>
+                        <button className="telegram" type="button" aria-label="Telegram" onClick={() => openSocial(appSettings?.telegram_channel_url, 'Telegram')}><SocialIcon name="telegram" /></button>
+                        <button className="tiktok" type="button" aria-label="TikTok" onClick={() => openSocial(appSettings?.tiktok_channel_url, 'TikTok')}><SocialIcon name="tiktok" /></button>
                     </div>
-                    <p className="login-footnote">Accounts are provided by the administrator.</p>
+                    <p className="login-footnote">{isAdminPortal ? 'Authorized administrators only.' : t('accounts_by_admin')}</p>
                 </div>
             </section>
         </main>
@@ -828,7 +933,7 @@ function useSpinStatus() {
 }
 
 function DashboardScreen() {
-    const { api, appSettings } = useContext(AuthContext);
+    const { api, appSettings, t } = useContext(AuthContext);
     const { spinStatus, pushToast } = useSpinStatus();
     const [wallet, setWallet] = useState(null);
     const [me, setMe] = useState(null);
@@ -872,7 +977,7 @@ function DashboardScreen() {
 
     return (
         <main className="app-shell user-page home-page">
-            <UserHeader onNotify={() => pushToast('You have no new notifications', 'ok')} />
+            <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
 
             <section className="announcement-board">
                 <img src="logotransparent.png" alt="" aria-hidden="true" />
@@ -892,22 +997,22 @@ function DashboardScreen() {
 
             <section className="account-points-card">
                 <div>
-                    <span>Current points</span>
-                    <strong>{formatPoints(currentBalance)} points</strong>
+                    <span>{t('current_points')}</span>
+                    <strong>{formatPoints(currentBalance)} {t('points')}</strong>
                 </div>
                 <div>
-                    <span>Account</span>
-                    <strong>{me?.name || me?.email || 'Lucky Draw player'}</strong>
+                    <span>{t('account')}</span>
+                    <strong>{me?.name || me?.email || 'မောင်းဘုရင် player'}</strong>
                     {me?.username ? <small>@{me.username}</small> : null}
-                    <small>{spinStatus?.can_free_spin_today ? 'Free spin ready today' : 'Free spin used today'}</small>
+                    <small>{spinStatus?.can_free_spin_today ? t('free_ready') : t('free_used')}</small>
                 </div>
             </section>
 
             <section className="play-bet-card">
                 <div className="play-bet-copy">
-                    <span>Outside website</span>
+                    <span>{t('outside_website')}</span>
                     <strong>{appSettings?.play_bet_label || DEFAULT_APP_SETTINGS.play_bet_label}</strong>
-                    <p>Open the partner website to continue.</p>
+                    <p>{t('partner_continue')}</p>
                 </div>
                 <button type="button" onClick={() => openExternal(appSettings?.play_bet_url, 'Play Bet')}>
                     Play <AppIcon name="arrow" size={19} />
@@ -917,8 +1022,8 @@ function DashboardScreen() {
             <section className="exchange-card">
                 <div className="exchange-heading">
                     <div>
-                        <span>Contact administrator</span>
-                        <h2>Exchange points</h2>
+                        <span>{t('contact_admin')}</span>
+                        <h2>{t('exchange_points')}</h2>
                     </div>
                     <AppIcon name="coin" size={28} />
                 </div>
@@ -931,19 +1036,19 @@ function DashboardScreen() {
                     </button>
                 </div>
                 <div className="contact-phone-list" aria-label="Contact phone numbers">
-                    <span>Phone numbers</span>
+                    <span>{t('phone_numbers')}</span>
                     {phoneNumbers.map((phone, index) => (
                         <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} key={`${index}-${phone}`}>{phone}</a>
                     ))}
                 </div>
             </section>
-            {loading ? <p className="page-loading">Loading your account…</p> : null}
+            {loading ? <p className="page-loading">{t('loading_account')}</p> : null}
         </main>
     );
 }
 
 function BuyPointsScreen() {
-    const { spinStatus, appSettings, pushToast } = useContext(AuthContext);
+    const { spinStatus, appSettings, pushToast, t } = useContext(AuthContext);
     const navigate = useNavigate();
     const balance = spinStatus?.wallet_balance || 0;
     const instructionLines = splitSettingLines(appSettings?.buy_points_instructions || DEFAULT_APP_SETTINGS.buy_points_instructions);
@@ -965,11 +1070,11 @@ function BuyPointsScreen() {
 
     return (
         <main className="app-shell user-page buy-page">
-            <UserHeader onNotify={() => pushToast('You have no new notifications', 'ok')} />
+            <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
             <div className="section-heading-row">
                 <div>
-                    <span>Point store</span>
-                    <h1>Buy points</h1>
+                    <span>{t('point_store')}</span>
+                    <h1>{t('buy_points')}</h1>
                 </div>
                 <BalancePill balance={balance} />
             </div>
@@ -977,7 +1082,7 @@ function BuyPointsScreen() {
             <section className="buy-info-card">
                 <AppIcon name="bag" size={24} />
                 <div>
-                    <strong>How to buy points</strong>
+                    <strong>{t('how_buy')}</strong>
                     <div className="buy-instructions">
                         {instructionLines.length ? instructionLines.map((line, index) => (
                             <p key={`${index}-${line}`}>{line}</p>
@@ -987,7 +1092,7 @@ function BuyPointsScreen() {
             </section>
 
             <section className="buy-social-card">
-                <strong>Contact admin</strong>
+                <strong>{t('contact_admin')}</strong>
                 <div className="buy-social-links">
                     {socialLinks.length ? socialLinks.map((item) => (
                         <button type="button" key={item.label} onClick={() => openLink(item.url, item.label)}>
@@ -997,13 +1102,13 @@ function BuyPointsScreen() {
                 </div>
             </section>
 
-            <button className="back-pill" type="button" onClick={() => navigate('/dashboard')}>Back to home</button>
+            <button className="back-pill" type="button" onClick={() => navigate('/dashboard')}>{t('back_home')}</button>
         </main>
     );
 }
 
 function SettingsScreen() {
-    const { me, spinStatus, appSettings, logout, pushToast } = useContext(AuthContext);
+    const { me, spinStatus, appSettings, logout, pushToast, language, setLanguage, t } = useContext(AuthContext);
     const navigate = useNavigate();
     const [signingOut, setSigningOut] = useState(false);
     const [aboutOpen, setAboutOpen] = useState(false);
@@ -1029,27 +1134,27 @@ function SettingsScreen() {
     };
 
     const menuItems = [
-        { label: 'Spin wheel', icon: 'wheel', action: () => navigate('/spin') },
-        { label: 'Daily bonus', icon: 'coin', action: () => navigate('/daily-bonus') },
-        { label: 'Transaction history', icon: 'history', action: () => navigate('/history') },
+        { label: t('spin_wheel'), icon: 'wheel', action: () => navigate('/spin') },
+        { label: t('daily_bonus'), icon: 'coin', action: () => navigate('/daily-bonus') },
+        { label: t('transaction_history'), icon: 'history', action: () => navigate('/history') },
     ];
 
     return (
         <main className="app-shell user-page settings-page">
-            <UserHeader onNotify={() => pushToast('You have no new notifications', 'ok')} />
+            <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
 
             <section className="profile-card">
                 <div className="profile-avatar"><img src="logo.png" alt="" /></div>
                 <div className="profile-details">
-                    <span>Your account</span>
-                    <strong>{me?.name || 'Lucky Draw player'}</strong>
-                    <p>{me?.username ? `@${me.username}` : 'Member account'}</p>
-                    <div><AppIcon name="coin" size={20} /> {formatPoints(spinStatus?.wallet_balance || 0)} points</div>
+                    <span>{t('your_account')}</span>
+                    <strong>{me?.name || 'မောင်းဘုရင် player'}</strong>
+                    <p>{me?.username ? `@${me.username}` : t('member_account')}</p>
+                    <div><AppIcon name="coin" size={20} /> {formatPoints(spinStatus?.wallet_balance || 0)} {t('points')}</div>
                 </div>
             </section>
 
             <section className="settings-card">
-                <p className="settings-label">Account & gameplay</p>
+                <p className="settings-label">{t('account_gameplay')}</p>
                 {menuItems.map((item) => (
                     <button className="settings-row" type="button" onClick={item.action} key={item.label}>
                         <span className="settings-row-icon"><AppIcon name={item.icon} size={21} /></span>
@@ -1060,33 +1165,41 @@ function SettingsScreen() {
             </section>
 
             <section className="settings-card">
-                <p className="settings-label">Connect</p>
+                <p className="settings-label">{t('language')}</p>
+                <div className="language-picker" role="group" aria-label={t('language')}>
+                    <button type="button" className={language === 'en' ? 'active' : ''} onClick={() => setLanguage('en')}>{t('english')}</button>
+                    <button type="button" className={language === 'my' ? 'active' : ''} onClick={() => setLanguage('my')}>{t('burmese')}</button>
+                </div>
+            </section>
+
+            <section className="settings-card">
+                <p className="settings-label">{t('connect')}</p>
                 <button className="settings-row" type="button" onClick={() => openConfiguredLink(appSettings?.telegram_channel_url, 'Telegram channel')}>
-                    <strong>Telegram channel</strong><AppIcon name="arrow" size={20} />
+                    <strong>{t('telegram_channel')}</strong><AppIcon name="arrow" size={20} />
                 </button>
                 <button className="settings-row" type="button" onClick={() => openConfiguredLink(appSettings?.facebook_page_url, 'Facebook page')}>
-                    <strong>Facebook page</strong><AppIcon name="arrow" size={20} />
+                    <strong>{t('facebook_page')}</strong><AppIcon name="arrow" size={20} />
                 </button>
                 <button className="settings-row" type="button" onClick={() => openConfiguredLink(appSettings?.tiktok_channel_url, 'TikTok channel')}>
-                    <strong>TikTok channel</strong><AppIcon name="arrow" size={20} />
+                    <strong>{t('tiktok_channel')}</strong><AppIcon name="arrow" size={20} />
                 </button>
                 <button className="settings-row" type="button" onClick={() => setAboutOpen(true)}>
-                    <strong>About this app</strong><AppIcon name="arrow" size={20} />
+                    <strong>{t('about_app')}</strong><AppIcon name="arrow" size={20} />
                 </button>
                 <button className="settings-row logout-row" type="button" onClick={signOut} disabled={signingOut}>
                     <span className="settings-row-icon"><AppIcon name="logout" size={21} /></span>
-                    <strong>{signingOut ? 'Logging out…' : 'Logout'}</strong>
+                    <strong>{signingOut ? t('logging_out') : t('logout')}</strong>
                 </button>
             </section>
 
-            <p className="app-version">Lucky Draw PWA · version 1.0</p>
+            <p className="app-version">မောင်းဘုရင် PWA · version 1.0</p>
             {aboutOpen ? (
                 <div className="detail-overlay centered-overlay" role="dialog" aria-modal="true" aria-label="About this app">
                     <section className="info-modal">
                         <img src="logo.png" alt="" />
-                        <h2>About this app</h2>
+                        <h2>{t('about_app')}</h2>
                         <p>{appSettings?.about_content || DEFAULT_APP_SETTINGS.about_content}</p>
-                        <button className="btn primary" type="button" onClick={() => setAboutOpen(false)}>Close</button>
+                        <button className="btn primary" type="button" onClick={() => setAboutOpen(false)}>{t('close')}</button>
                     </section>
                 </div>
             ) : null}
@@ -1095,7 +1208,7 @@ function SettingsScreen() {
 }
 
 function DailyBonusScreen() {
-    const { api, pushToast } = useContext(AuthContext);
+    const { api, pushToast, t } = useContext(AuthContext);
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
 
@@ -1117,12 +1230,12 @@ function DailyBonusScreen() {
 
     return (
         <main className="app-shell user-page sub-page">
-            <UserHeader onNotify={() => pushToast('You have no new notifications', 'ok')} />
-            <SpinnerCard title="Daily Bonus">
-                <p className="subtitle">One free claim each day.</p>
+            <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
+            <SpinnerCard title={t('daily_bonus')}>
+                <p className="subtitle">{t('daily_claim_once')}</p>
                 <div className="spacer">
                     <button className="btn primary" onClick={claim} disabled={busy}>
-                        {busy ? 'Claiming…' : 'Claim Now'}
+                        {busy ? t('claiming') : t('claim_now')}
                     </button>
                 </div>
                 {message ? <p className="message ok spacer">{message}</p> : null}
@@ -1189,7 +1302,7 @@ function SpinWheel({ size, segments, rotation, transitionMs = 2200, centerLabel 
 }
 
 function SpinScreen() {
-    const { api, spinStatus, refreshSpinStatus, pushToast } = useContext(AuthContext);
+    const { api, spinStatus, refreshSpinStatus, pushToast, t } = useContext(AuthContext);
     const navigate = useNavigate();
     const [result, setResult] = useState({ text: '', type: 'ok' });
     const [winModal, setWinModal] = useState(null);
@@ -1338,18 +1451,18 @@ function SpinScreen() {
     const hasEnoughPaidSpinPoints = walletBalance >= paidSpinCost;
     const centerDisabled = busy || spinning || !localStatus?.config;
     const centerActionLabel = spinning
-        ? 'Spinning'
+        ? t('spinning')
         : localStatus?.can_free_spin_today
-          ? 'Free Spin'
+          ? t('free_spin')
           : !hasEnoughPaidSpinPoints
-            ? 'Not enough points'
-            : 'Paid Spin';
+            ? t('not_enough')
+            : t('paid_spin');
     const centerActionSubLabel = spinning
         ? ''
         : localStatus?.can_free_spin_today
-          ? 'Today'
+          ? t('today')
           : !hasEnoughPaidSpinPoints
-            ? 'Buy points'
+            ? t('buy_points_short')
             : `${formatPoints(paidSpinCost)} pts`;
 
     const handleCenterSpinAction = () => {
@@ -1398,9 +1511,9 @@ function SpinScreen() {
 
     return (
         <main className="app-shell user-page sub-page">
-            <UserHeader onNotify={() => pushToast('You have no new notifications', 'ok')} />
-            <SpinnerCard title={localStatus?.config?.name || 'Spin Wheel'}>
-                <p className="subtitle">Wheel rewards are points-only.</p>
+            <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
+            <SpinnerCard title={localStatus?.config?.name || t('spin_wheel')}>
+                <p className="subtitle">{t('wheel_points_only')}</p>
                 <div className="spacer spin-wheel-wrapper">
                     <SpinWheel
                         size={260}
@@ -1418,23 +1531,23 @@ function SpinScreen() {
                     <section className="buy-banner spin-buy-banner">
                         <div className="buy-banner-icon"><AppIcon name="coin" size={30} /></div>
                         <div>
-                            <span>Need more points?</span>
-                            <strong>Buy points from admin</strong>
+                            <span>{t('need_points')}</span>
+                            <strong>{t('buy_from_admin')}</strong>
                         </div>
-                        <button type="button" onClick={() => navigate('/buy-points')}>Buy</button>
+                        <button type="button" onClick={() => navigate('/buy-points')}>{t('buy')}</button>
                     </section>
                     <section className="daily-card spin-daily-card">
                         <div className="daily-card-heading">
                             <div>
-                                <span>Daily bonus</span>
-                                <h2>Daily check in</h2>
+                                <span>{t('daily_bonus')}</span>
+                                <h2>{t('daily_checkin')}</h2>
                             </div>
                             <strong className={`daily-status ${localStatus?.can_claim_daily_bonus ? 'ready' : ''}`}>
-                                {localStatus?.can_claim_daily_bonus ? 'Ready' : 'Claimed'}
+                                {localStatus?.can_claim_daily_bonus ? t('ready') : t('claimed')}
                             </strong>
                         </div>
                         <button className="collect-button" type="button" onClick={claimDailyPoints} disabled={claimBusy || !localStatus?.can_claim_daily_bonus}>
-                            {claimBusy ? 'Claiming…' : localStatus?.can_claim_daily_bonus ? 'Claim points' : 'Claimed today'}
+                            {claimBusy ? t('claiming') : localStatus?.can_claim_daily_bonus ? t('claim_points') : t('claimed_today')}
                         </button>
                         {claimMessage ? <p className="daily-claim-message">{claimMessage}</p> : null}
                     </section>
@@ -1450,11 +1563,11 @@ function SpinScreen() {
                             </div>
                             <div className="win-coin"><AppIcon name="coin" size={42} /></div>
                             <span className="win-kicker">{winModal.rewardType === 'free' ? 'Daily free spin' : 'Paid spin'}</span>
-                            <h2>You won!</h2>
-                            <strong className="win-points">+{formatPoints(winModal.points)} points</strong>
+                            <h2>{t('won')}</h2>
+                            <strong className="win-points">+{formatPoints(winModal.points)} {t('points')}</strong>
                             <p>{winModal.segment}</p>
-                            <small>New balance: {formatPoints(winModal.balanceAfter)} points</small>
-                            <button className="btn primary" type="button" onClick={() => setWinModal(null)}>Awesome!</button>
+                            <small>{t('new_balance')}: {formatPoints(winModal.balanceAfter)} {t('points')}</small>
+                            <button className="btn primary" type="button" onClick={() => setWinModal(null)}>{t('awesome')}</button>
                         </section>
                     </div>
                 ) : null}
@@ -1522,7 +1635,7 @@ function PullToRefreshList({ onRefresh, children }) {
 }
 
 function HistoryScreen() {
-    const { api, pushToast } = useContext(AuthContext);
+    const { api, pushToast, t } = useContext(AuthContext);
     const [type, setType] = useState('');
     const [from, setFrom] = useState('');
     const [to, setTo] = useState('');
@@ -1531,6 +1644,10 @@ function HistoryScreen() {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
+    const transactionTitle = (transactionType) => {
+        const translated = t(`tx_${transactionType}`);
+        return translated === `tx_${transactionType}` ? humanizeTransactionType(transactionType) : translated;
+    };
 
     const load = async (nextPage = 1) => {
         setLoading(true);
@@ -1563,11 +1680,11 @@ function HistoryScreen() {
 
     return (
         <main className="app-shell user-page sub-page">
-            <UserHeader onNotify={() => pushToast('You have no new notifications', 'ok')} />
-            <SpinnerCard title="History">
+            <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
+            <SpinnerCard title={t('history')}>
                 <div className="history-filters spacer">
                     <select value={type} onChange={(event) => setType(event.target.value)}>
-                        <option value="">All</option>
+                        <option value="">{t('all')}</option>
                         <option value="daily_bonus">Daily Bonus</option>
                         <option value="free_spin_reward">Free Spin</option>
                         <option value="paid_spin_reward">Paid Spin Reward</option>
@@ -1587,27 +1704,27 @@ function HistoryScreen() {
                         placeholder="To"
                     />
                     <div className="history-filter-actions">
-                        <button onClick={() => load(1)} type="button">Apply filters</button>
-                        <button onClick={() => load(page)} type="button">Refresh</button>
+                        <button onClick={() => load(1)} type="button">{t('apply_filters')}</button>
+                        <button onClick={() => load(page)} type="button">{t('refresh')}</button>
                     </div>
                 </div>
-                {loading && <p className="subtitle">Loading…</p>}
+                {loading && <p className="subtitle">{t('loading')}</p>}
                 <PullToRefreshList onRefresh={() => load(1)}>
-                    {!loading && transactions.length === 0 ? <p className="subtitle">No transactions yet.</p> : null}
+                    {!loading && transactions.length === 0 ? <p className="subtitle">{t('no_transactions')}</p> : null}
                     <ul className="history-list spacer">
                         {transactions.map((tx) => (
                             <li className="history-transaction" key={tx.id}>
                                 <button
                                     className="history-transaction-row"
                                     type="button"
-                                    aria-label={`Open ${humanizeTransactionType(tx.type)} details`}
+                                    aria-label={transactionTitle(tx.type)}
                                     onClick={() => setSelectedTransaction(tx)}
                                 >
                                     <span className={`history-type-icon ${tx.amount >= 0 ? 'credit' : 'debit'}`}>
                                         <AppIcon name={tx.type === 'spin_spend' ? 'wheel' : 'coin'} size={20} />
                                     </span>
                                     <span className="history-main-copy">
-                                        <strong>{humanizeTransactionType(tx.type)}</strong>
+                                        <strong>{transactionTitle(tx.type)}</strong>
                                         <small>{new Date(tx.created_at).toLocaleString()}</small>
                                     </span>
                                     <span className="history-value-copy">
@@ -1629,7 +1746,7 @@ function HistoryScreen() {
                         disabled={page <= 1}
                         type="button"
                     >
-                        Prev
+                        {t('previous')}
                     </button>
                     <span className="toolbar-caption">
                         {meta.current_page} / {meta.last_page}
@@ -1640,7 +1757,7 @@ function HistoryScreen() {
                         disabled={page >= meta.last_page}
                         type="button"
                     >
-                        Next
+                        {t('next')}
                     </button>
                 </div>
                 <TransactionDetailSheet
@@ -2500,7 +2617,7 @@ function AdminApplicationSettingsScreen() {
     const contactFields = [
         ['play_bet_url', 'Play Bet URL', 'url'],
         ['play_bet_label', 'Play Bet display text', 'text'],
-        ['telegram_contact_url', 'Telegram exchange/contact URL', 'text'],
+        ['telegram_contact_url', 'Telegram account creation / contact URL', 'text'],
         ['viber_contact_url', 'Viber exchange/contact URL', 'text'],
     ];
     const socialFields = [
