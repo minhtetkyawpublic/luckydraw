@@ -3,7 +3,7 @@
     @php
         $configuredBasePath = rtrim((string) parse_url(config('app.url'), PHP_URL_PATH), '/');
         $isAdminPortal = request()->is('admin') || request()->is('admin/*');
-        $installedAppName = $isAdminPortal ? 'MBY Admin' : 'Maung Bayin';
+        $installedAppName = $isAdminPortal ? 'MBY Admin' : 'Moung Ba Yin';
         $manifestFile = $isAdminPortal ? 'admin-manifest.webmanifest' : 'manifest.webmanifest';
     @endphp
     <head>

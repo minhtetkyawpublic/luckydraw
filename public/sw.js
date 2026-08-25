@@ -1,4 +1,4 @@
-const VERSION = 'v10-mby-announcement-push';
+const VERSION = 'v11-moung-ba-yin-ui';
 const PATHNAME = new URL(self.location.href).pathname;
 const SW_MARKER = '/sw.js';
 const BASE_PATH = (PATHNAME.lastIndexOf(SW_MARKER) >= 0

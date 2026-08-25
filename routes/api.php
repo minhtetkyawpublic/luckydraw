@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ApplicationSettingController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BettingSiteController;
 use App\Http\Controllers\DailyBonusController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SpinConfigurationController;
@@ -35,6 +36,7 @@ Route::middleware(['auth:sanctum', 'active-user', 'role:user'])->group(function 
     Route::get('/spins/status', SpinController::class.'@status')->middleware('throttle:spin-status');
     Route::get('/spin-exchange-packages', SpinExchangeController::class.'@index');
     Route::post('/spin-exchange-packages/{package}/exchange', SpinExchangeController::class.'@exchange')->middleware('throttle:spin-paid');
+    Route::get('/betting-sites', BettingSiteController::class.'@index');
     Route::get('/announcement', AnnouncementController::class.'@show');
     Route::post('/announcement/read', AnnouncementController::class.'@markRead')->middleware('throttle:20,1');
     Route::get('/push/config', PushSubscriptionController::class.'@config');
@@ -49,6 +51,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'active-user', 'role:admin',
     Route::patch('/app-settings', ApplicationSettingController::class.'@update');
     Route::get('/announcement', AdminAnnouncementController::class.'@show');
     Route::put('/announcement', AdminAnnouncementController::class.'@update');
+    Route::get('/overview', AdminUserController::class.'@overview');
+    Route::get('/betting-sites', BettingSiteController::class.'@adminIndex');
+    Route::post('/betting-sites', BettingSiteController::class.'@store');
+    Route::patch('/betting-sites/{bettingSite}', BettingSiteController::class.'@update');
+    Route::delete('/betting-sites/{bettingSite}', BettingSiteController::class.'@destroy');
     Route::get('/users', AdminUserController::class.'@index');
     Route::post('/users', AdminUserController::class.'@store');
     Route::get('/users/{user}', AdminUserController::class.'@show');

@@ -141,7 +141,7 @@ class SpinService
 
         $cooldown = $this->eligibility->getPaidSpinCooldownInfo($user->id, $config);
         $today = Carbon::today();
-        $weekStart = $today->copy()->startOfWeek(Carbon::SUNDAY);
+        $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
         $weekEnd = $weekStart->copy()->addDays(6);
         $settings = ApplicationSetting::current();
         $bonusSchedule = $settings->daily_bonus_schedule;

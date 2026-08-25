@@ -79,13 +79,25 @@ class PhaseOneTest extends TestCase
         $this->get('/login')
             ->assertOk()
             ->assertSee('id="app"', false)
-            ->assertSee('Maung Bayin')
+            ->assertSee('Moung Ba Yin')
             ->assertSee('/manifest.webmanifest', false);
         $this->get('/admin/login')
             ->assertOk()
             ->assertSee('id="app"', false)
             ->assertSee('MBY Admin')
             ->assertSee('/admin-manifest.webmanifest', false);
+    }
+
+    public function test_user_and_admin_pwa_names_are_distinct_and_correct(): void
+    {
+        $userManifest = json_decode(file_get_contents(public_path('manifest.webmanifest')), true, flags: JSON_THROW_ON_ERROR);
+        $adminManifest = json_decode(file_get_contents(public_path('admin-manifest.webmanifest')), true, flags: JSON_THROW_ON_ERROR);
+
+        $this->assertSame('Moung Ba Yin', $userManifest['name']);
+        $this->assertSame('Moung Ba Yin', $userManifest['short_name']);
+        $this->assertSame('MBY Admin', $adminManifest['name']);
+        $this->assertSame('./', $userManifest['id']);
+        $this->assertSame('./admin', $adminManifest['id']);
     }
 
     public function test_admin_can_create_user_and_user_can_login(): void

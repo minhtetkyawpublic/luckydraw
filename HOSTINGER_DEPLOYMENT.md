@@ -12,6 +12,7 @@ deployment does not need Node.js at runtime.
 4. Set at least these production values:
 
    ```dotenv
+   APP_NAME="Moung Ba Yin"
    APP_ENV=production
    APP_DEBUG=false
    APP_URL=https://your-domain.example
@@ -28,7 +29,7 @@ deployment does not need Node.js at runtime.
    DB_PASSWORD=your_database_password
    LUCKYDRAW_ADMIN_EMAIL=your-admin@example.com
    LUCKYDRAW_ADMIN_PASSWORD=use-a-long-unique-password
-   LUCKYDRAW_ADMIN_NAME="Lucky Draw Admin"
+   LUCKYDRAW_ADMIN_NAME="Moung Ba Yin Admin"
    LUCKYDRAW_SEED_SAMPLE_USER=false
    QUEUE_CONNECTION=database
    WEBPUSH_VAPID_SUBJECT=mailto:admin@mbyfootball.com

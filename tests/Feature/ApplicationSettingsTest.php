@@ -105,7 +105,7 @@ class ApplicationSettingsTest extends TestCase
             ->assertJsonPath('transaction.amount', 45);
     }
 
-    public function test_daily_bonus_week_starts_sunday_and_reports_claimed_missed_today_and_upcoming_days(): void
+    public function test_daily_bonus_week_starts_monday_and_reports_claimed_missed_today_and_upcoming_days(): void
     {
         Carbon::setTestNow('2026-08-26 10:00:00'); // Wednesday
 
@@ -117,33 +117,43 @@ class ApplicationSettingsTest extends TestCase
             ]);
             DailyPointClaim::query()->create([
                 'user_id' => $user->id,
-                'claim_date' => '2026-08-23',
+                'claim_date' => '2026-08-24',
                 'points_awarded' => 10,
             ]);
 
             $status = $this->actingAs($user)->getJson('/api/spins/status')->assertOk();
             $status->assertJsonCount(7, 'status.daily_bonus_week')
                 ->assertJsonPath('status.daily_bonus_week.0.day', 1)
-                ->assertJsonPath('status.daily_bonus_week.0.weekday', 'Sunday')
+                ->assertJsonPath('status.daily_bonus_week.0.weekday', 'Monday')
                 ->assertJsonPath('status.daily_bonus_week.0.status', 'claimed')
                 ->assertJsonPath('status.daily_bonus_week.1.status', 'missed')
-                ->assertJsonPath('status.daily_bonus_week.3.points', 40)
-                ->assertJsonPath('status.daily_bonus_week.3.status', 'today')
-                ->assertJsonPath('status.daily_bonus_week.4.status', 'upcoming');
+                ->assertJsonPath('status.daily_bonus_week.2.points', 30)
+                ->assertJsonPath('status.daily_bonus_week.2.status', 'today')
+                ->assertJsonPath('status.daily_bonus_week.3.status', 'upcoming');
 
             $this->postJson('/api/points/claim-daily')
                 ->assertOk()
-                ->assertJsonPath('transaction.amount', 40);
+                ->assertJsonPath('transaction.amount', 30);
 
             $this->getJson('/api/spins/status')
                 ->assertOk()
-                ->assertJsonPath('status.daily_bonus_week.3.status', 'claimed')
+                ->assertJsonPath('status.daily_bonus_week.2.status', 'claimed')
                 ->assertJsonPath('status.can_claim_daily_bonus', false);
 
-            Carbon::setTestNow('2026-08-30 10:00:00'); // next Sunday
+            Carbon::setTestNow('2026-08-30 10:00:00'); // Sunday is Day 7
             $this->getJson('/api/spins/status')
                 ->assertOk()
-                ->assertJsonPath('status.daily_bonus_week.0.date', '2026-08-30')
+                ->assertJsonPath('status.daily_bonus_week.6.weekday', 'Sunday')
+                ->assertJsonPath('status.daily_bonus_week.6.points', 70)
+                ->assertJsonPath('status.daily_bonus_week.6.status', 'today');
+            $this->postJson('/api/points/claim-daily')
+                ->assertOk()
+                ->assertJsonPath('transaction.amount', 70);
+
+            Carbon::setTestNow('2026-08-31 10:00:00'); // next Monday
+            $this->getJson('/api/spins/status')
+                ->assertOk()
+                ->assertJsonPath('status.daily_bonus_week.0.date', '2026-08-31')
                 ->assertJsonPath('status.daily_bonus_week.0.status', 'today')
                 ->assertJsonPath('status.can_claim_daily_bonus', true);
         } finally {

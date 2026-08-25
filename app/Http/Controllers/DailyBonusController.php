@@ -33,7 +33,8 @@ class DailyBonusController extends Controller
 
         $settings = ApplicationSetting::current();
         $schedule = $settings->daily_bonus_schedule;
-        $bonusPoints = (int) ($schedule[now()->dayOfWeek] ?? $settings->daily_bonus_points);
+        $mondayFirstIndex = now()->dayOfWeekIso - 1;
+        $bonusPoints = (int) ($schedule[$mondayFirstIndex] ?? $settings->daily_bonus_points);
 
         try {
             $transaction = $this->dailyBonusService->claim($request->user(), $bonusPoints);

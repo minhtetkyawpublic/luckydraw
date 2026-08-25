@@ -1,4 +1,4 @@
-﻿# Lucky Draw PWA — End-to-End Development Roadmap
+﻿# Moung Ba Yin PWA — End-to-End Development Roadmap
 
 ## Source of truth
 
@@ -115,7 +115,7 @@ This roadmap is based on:
 - [x] `POST /api/register` absent
 - [x] admin create user + user login with assigned credentials
 - [x] daily bonus one-time per day
-- [x] seven-day admin-configurable bonus schedule, Sunday rollover, and claimed/missed/today/upcoming states
+- [x] seven-day admin-configurable bonus schedule, Monday rollover, and claimed/missed/today/upcoming states
 - [x] free spin one-time per day
 - [x] spin-credit balance rejection and point-to-spin package exchange
 - [x] immutable transaction entries with `balance_after`
@@ -162,12 +162,14 @@ This roadmap is based on:
 - [x] Add query indexes for query-performance:
   - spin/events by user/date/type
   - point_transactions by user/type/date
+- [x] Add an authenticated betting-site directory and admin CRUD for website name, display text, validated HTTP(S) URL, button text, active status, and display order.
 
 ### Frontend tasks
 
 - [x] Add role-based route split:
   - user routes: dashboard, daily bonus, spin, history
   - admin routes: users, config, spin/events
+- [x] Route the dashboard Play button to the internal betting-site directory; open a selected website externally only after the user chooses it.
 - [x] Replace spin placeholders with animated wheel interaction.
 - [x] Add live chips/status on dashboard:
   - free spin status

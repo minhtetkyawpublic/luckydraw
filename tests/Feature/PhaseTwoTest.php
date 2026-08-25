@@ -190,6 +190,34 @@ class PhaseTwoTest extends TestCase
             ->assertJsonPath('users.0.username', 'updatedtarget');
     }
 
+    public function test_admin_overview_returns_all_user_and_wallet_totals(): void
+    {
+        $admin = $this->createAdmin();
+        $first = User::query()->create([
+            'name' => 'First Overview User',
+            'username' => 'overviewfirst',
+            'password' => 'user12345',
+            'role' => 'user',
+            'status' => 'active',
+        ]);
+        $second = User::query()->create([
+            'name' => 'Second Overview User',
+            'username' => 'overviewsecond',
+            'password' => 'user12345',
+            'role' => 'user',
+            'status' => 'disabled',
+        ]);
+        $this->seedWallet($first, 1250);
+        $this->seedWallet($second, 2750);
+
+        $this->loginAs($admin);
+
+        $this->getJson('/api/admin/overview')
+            ->assertOk()
+            ->assertJsonPath('statistics.total_users', 2)
+            ->assertJsonPath('statistics.total_coins', 4000);
+    }
+
     public function test_admin_can_open_user_records_with_paginated_transactions(): void
     {
         $admin = $this->createAdmin();
@@ -340,6 +368,7 @@ class PhaseTwoTest extends TestCase
         $user = $this->createBasicUser();
         $this->loginAs($user);
 
+        $this->getJson('/api/admin/overview')->assertStatus(403);
         $this->getJson('/api/admin/users')->assertStatus(403);
         $this->patchJson("/api/admin/users/{$user->id}", ['status' => 'disabled'])->assertStatus(403);
     }

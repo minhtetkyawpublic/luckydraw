@@ -77,6 +77,18 @@ function formatTimeRemaining(totalSeconds) {
     return `${minutes}m ${String(remainder).padStart(2, '0')}s`;
 }
 function AppIcon({ name, size = 24, strokeWidth = 2.2 }) {
+    if (name === 'coin') {
+        return (
+            <svg aria-hidden="true" className="app-icon coin-icon" width={size} height={size} viewBox="0 0 24 24">
+                <circle className="coin-icon-edge" cx="12" cy="12" r="10" />
+                <circle className="coin-icon-face" cx="12" cy="12" r="7.4" />
+                <path className="coin-icon-shine" d="M7.2 8.7A6.2 6.2 0 0 1 11 6.2" />
+                <path className="coin-icon-mark" d="M9.6 17V7.2h3.1a3.1 3.1 0 0 1 0 6.2H9.6m0-3.1h3.1" />
+                <circle className="coin-icon-spark" cx="17.6" cy="7.1" r="1" />
+            </svg>
+        );
+    }
+
     const paths = {
         home: <><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10v10h5v-6h3v6h5V10" /></>,
         bag: <><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 9V7a3 3 0 0 1 6 0v2" /></>,
@@ -84,11 +96,11 @@ function AppIcon({ name, size = 24, strokeWidth = 2.2 }) {
         bell: <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" /><path d="M10 20h4" /></>,
         lock: <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
         eye: <><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></>,
-        coin: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5.5" /><path d="M14.5 9.5c-.6-.6-1.4-.9-2.5-.9-1.4 0-2.5.7-2.5 1.8 0 2.9 5.2 1.3 5.2 3.9 0 1.1-1.1 1.9-2.7 1.9-1.1 0-2.1-.4-2.8-1.1M12 7v10" /></>,
         history: <><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5M12 7v5l3 2" /></>,
         wheel: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2" /><path d="m12 3 1.5 7.2M20.6 9l-6.8 2.4M17.3 19l-4.2-5.5M6.7 19l4.2-5.5M3.4 9l6.8 2.4" /></>,
         settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" /></>,
         content: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
+        link: <><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1" /><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1" /></>,
         shield: <><path d="M12 3 5 6v5c0 4.8 2.8 8 7 10 4.2-2 7-5.2 7-10V6l-7-3Z" /><path d="m9.5 12 1.7 1.7 3.5-3.7" /></>,
         arrow: <><path d="m9 18 6-6-6-6" /></>,
         logout: <><path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10" /></>,
@@ -117,6 +129,7 @@ function SocialIcon({ name, size = 26 }) {
     const paths = {
         facebook: <path d="M14.3 8.3h3V4.2c-.5-.1-2.2-.2-4.1-.2-4 0-6.7 2.4-6.7 6.9v3.8H2v4.6h4.5V31h5.6V19.3h4.6l.7-4.6h-5.3v-3.3c0-1.3.4-2.3 2.2-2.3Z" />,
         telegram: <path d="M29.2 3.2 2.9 13.4c-1.8.7-1.8 1.7-.3 2.2l6.8 2.1 2.6 8c.3.9.2 1.3 1.1 1.3.7 0 1-.3 1.4-.7l3.3-3.2 6.9 5.1c1.3.7 2.2.3 2.5-1.2l4.5-21.2c.5-1.9-.7-2.8-2.5-2.1ZM11.1 17.2l15.3-9.7c.8-.5 1.5-.2.9.3L14.7 19.2l-.5 5.2-3.1-7.2Z" />,
+        viber: <><path d="M16 3C8.8 3 3 8.1 3 14.4c0 3.6 1.9 6.8 4.9 8.9l-1.3 5.4 5.5-2.8c1.2.3 2.5.5 3.9.5 7.2 0 13-5.1 13-12S23.2 3 16 3Z" /><path d="M11 9.4c.3-.7.8-.8 1.3-.8.4 0 .8 0 1.1.7l1.1 2.6c.2.5.1.9-.2 1.3l-.8 1c1 2 2.4 3.4 4.4 4.4l1-.8c.4-.3.8-.4 1.3-.2l2.6 1.1c.6.3.7.7.7 1.1 0 .5-.1 1-.8 1.3-.7.3-1.7.6-2.6.4-5.8-1-10.4-5.6-11.4-11.4-.2-.9.1-1.9.3-2.7Z" fill="#7360f2" /></>,
         tiktok: <path d="M23.6 7.1a7.5 7.5 0 0 1-4.4-4V3h-4.8v18.1a3.8 3.8 0 1 1-3.3-3.8c.4 0 .8.1 1.2.2v-4.9a8.6 8.6 0 1 0 6.9 8.5v-9.2a12.1 12.1 0 0 0 7.1 2.3V9.4a7.5 7.5 0 0 1-2.7-.5V7.1Z" />,
     };
     return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 32 32" fill="currentColor">{paths[name]}</svg>;
@@ -148,15 +161,15 @@ const DEFAULT_APP_SETTINGS = {
     telegram_channel_url: '',
     facebook_page_url: '',
     tiktok_channel_url: '',
-    about_content: 'မောင်းဘုရင် is a points-only Lucky Draw Wheel app.',
+    about_content: 'Moung Ba Yin is a points and rewards app.',
     how_to_use_terms: 'အပ်(ပ်)အသုံးပြုနည်း\n• အသုံးပြုသူအမည်နှင့် စကားဝှက်ဖြင့် လော့အင်ဝင်ပါ။\n• နေ့စဉ်ပွိုင့်ရယူပြီး ကံစမ်းဘီးကို လှည့်နိုင်ပါသည်။\n• ပွိုင့်ဝယ်ရန် အက်ဒမင်ကို ဆက်သွယ်ပါ။\n\nစည်းကမ်းချက်များ\n• တစ်ရက်လျှင် အခမဲ့တစ်ကြိမ် လှည့်နိုင်ပါသည်။\n• အပ်(ပ်)အတွင်းရှိ ပွိုင့်များကို ငွေသားအဖြစ် သတ်မှတ်မထားပါ။\n• အကူအညီလိုပါက အက်ဒမင်ကို ဆက်သွယ်ပါ။',
     daily_bonus_points: 20,
     daily_bonus_schedule: [20, 20, 20, 20, 20, 20, 20],
-    home_ticker_text: 'Welcome to မောင်းဘုရင် • One free spin every day • Points-only rewards • Contact admin to exchange or buy points',
+    home_ticker_text: 'Welcome to Moung Ba Yin • One free spin every day • Points-only rewards • Contact admin to exchange or buy points',
     home_board_text: 'One free spin every day\nPoints-only wheel rewards\nPaid spins use wallet points\nDaily bonus available once\nAll activity is recorded\nContact admin for points',
 };
 
-const DAILY_BONUS_WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const DAILY_BONUS_WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 function normalizeDailyBonusSchedule(settings, coerceNumbers = true) {
     if (Array.isArray(settings?.daily_bonus_schedule) && settings.daily_bonus_schedule.length === 7) {
@@ -222,12 +235,28 @@ async function syncGrantedPushSubscription(api, createIfMissing = true) {
 function UserHeader({ onNotify }) {
     const { announcement, t } = useContext(AuthContext);
     const navigate = useNavigate();
-    const openAnnouncement = () => {
-        if (announcement) {
-            navigate('/announcement');
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+    useEffect(() => {
+        if (!notificationsOpen) return undefined;
+        const closeOnEscape = (event) => {
+            if (event.key === 'Escape') setNotificationsOpen(false);
+        };
+        window.addEventListener('keydown', closeOnEscape);
+        return () => window.removeEventListener('keydown', closeOnEscape);
+    }, [notificationsOpen]);
+
+    const toggleNotifications = () => {
+        if (!announcement) {
+            onNotify?.();
             return;
         }
-        onNotify?.();
+        setNotificationsOpen((current) => !current);
+    };
+
+    const openAnnouncement = () => {
+        setNotificationsOpen(false);
+        navigate('/announcement');
     };
 
     return (
@@ -239,20 +268,38 @@ function UserHeader({ onNotify }) {
                         <strong>မောင်းဘုရင်</strong>
                     </div>
                 </div>
-                <button className="icon-button notification-bell" type="button" aria-label={announcement ? t('open_announcement') : t('notifications_empty')} onClick={openAnnouncement}>
+                <button className="icon-button notification-bell" type="button" aria-label={announcement ? t('open_announcement') : t('notifications_empty')} aria-expanded={notificationsOpen} onClick={toggleNotifications}>
                     <AppIcon name="bell" size={23} />
                     {announcement?.unread ? <i aria-label={t('new_announcement')} /> : null}
                 </button>
             </header>
-            {announcement ? (
-                <button className={`announcement-headline ${announcement.unread ? 'unread' : ''}`} type="button" onClick={openAnnouncement}>
-                    <span><AppIcon name="bell" size={18} />{announcement.unread ? t('new_announcement') : t('announcement')}</span>
-                    <strong>{announcement.title}</strong>
-                    <AppIcon name="arrow" size={18} />
-                </button>
+            {notificationsOpen && announcement ? (
+                <>
+                    <button className="notification-popover-backdrop" type="button" aria-label={t('close')} onClick={() => setNotificationsOpen(false)} />
+                    <section className="notification-popover" aria-label={t('notifications')}>
+                        <div className="notification-popover-heading">
+                            <strong>{t('notifications')}</strong>
+                            <span>1</span>
+                        </div>
+                        <button className={`notification-list-item ${announcement.unread ? 'unread' : ''}`} type="button" onClick={openAnnouncement}>
+                            <span className="notification-list-icon"><AppIcon name="bell" size={19} /></span>
+                            <span className="notification-list-copy">
+                                <small>{announcement.unread ? t('new_announcement') : t('announcement')}</small>
+                                <strong>{announcement.title}</strong>
+                                <span>{announcementExcerpt(announcement.body, 90)}</span>
+                            </span>
+                            <AppIcon name="arrow" size={18} />
+                        </button>
+                    </section>
+                </>
             ) : null}
         </>
     );
+}
+
+function announcementExcerpt(value, limit = 90) {
+    const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+    return normalized.length > limit ? `${normalized.slice(0, limit).trim()}…` : normalized;
 }
 
 function BalancePill({ balance = 0 }) {
@@ -476,7 +523,7 @@ class AppErrorBoundary extends React.Component {
     }
 
     componentDidCatch(error, info) {
-        console.error('Lucky Draw screen error', error, info);
+        console.error('Moung Ba Yin screen error', error, info);
     }
 
     render() {
@@ -686,6 +733,16 @@ function AppShell() {
     }, [api, me?.role, refreshAnnouncement]);
 
     useEffect(() => {
+        if (me?.role !== 'user' || !announcement?.unread) return;
+
+        const storageKey = `mby-announcement-notice-${me.id}`;
+        if (Number(window.localStorage.getItem(storageKey) || 0) >= Number(announcement.version || 0)) return;
+
+        window.localStorage.setItem(storageKey, String(announcement.version || 0));
+        pushToast(`${announcement.title} — ${announcementExcerpt(announcement.body, 55)}`, 'warn');
+    }, [announcement?.body, announcement?.title, announcement?.unread, announcement?.version, me?.id, me?.role, pushToast]);
+
+    useEffect(() => {
         if (!('serviceWorker' in navigator)) return undefined;
         const onServiceWorkerMessage = (event) => {
             if (event.data?.type === 'ANNOUNCEMENT_UPDATED' && me?.role === 'user') {
@@ -790,6 +847,14 @@ function AppShell() {
                             }
                         />
                         <Route
+                            path="/betting-sites"
+                            element={
+                                <ProtectedRoute user={me} roles={['user']}>
+                                    <BettingSitesScreen />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
                             path="/settings"
                             element={
                                 <ProtectedRoute user={me} roles={['user']}>
@@ -866,6 +931,14 @@ function AppShell() {
                             element={
                                 <AdminRoute user={me}>
                                     <AdminApplicationSettingsScreen />
+                                </AdminRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/betting-sites"
+                            element={
+                                <AdminRoute user={me}>
+                                    <AdminBettingSitesScreen />
                                 </AdminRoute>
                             }
                         />
@@ -1075,8 +1148,9 @@ function useSpinStatus() {
 }
 
 function DashboardScreen() {
-    const { api, appSettings, t } = useContext(AuthContext);
+    const { api, appSettings, announcement, t } = useContext(AuthContext);
     const { spinStatus, pushToast } = useSpinStatus();
+    const navigate = useNavigate();
     const [wallet, setWallet] = useState(null);
     const [me, setMe] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -1108,7 +1182,7 @@ function DashboardScreen() {
         window.open(safeUrl, '_blank', 'noopener,noreferrer');
     };
 
-    const announcement = String(appSettings?.home_ticker_text || DEFAULT_APP_SETTINGS.home_ticker_text);
+    const tickerText = String(appSettings?.home_ticker_text || DEFAULT_APP_SETTINGS.home_ticker_text);
     const boardItems = splitSettingLines(appSettings?.home_board_text || DEFAULT_APP_SETTINGS.home_board_text);
     const phoneNumbers = splitSettingLines(
         appSettings?.contact_phone_numbers
@@ -1121,6 +1195,15 @@ function DashboardScreen() {
         <main className="app-shell user-page home-page">
             <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
 
+            {announcement ? (
+                <button className={`announcement-headline ${announcement.unread ? 'unread' : ''}`} type="button" onClick={() => navigate('/announcement')}>
+                    <span><AppIcon name="bell" size={17} />{announcement.unread ? t('new_announcement') : t('announcement')}</span>
+                    <strong>{announcement.title}</strong>
+                    <p>{announcementExcerpt(announcement.body, 105)}</p>
+                    <AppIcon name="arrow" size={18} />
+                </button>
+            ) : null}
+
             <section className="announcement-board">
                 <img src="logotransparent.png" alt="" aria-hidden="true" />
                 <div className="announcement-grid">
@@ -1130,22 +1213,21 @@ function DashboardScreen() {
                 </div>
             </section>
 
-            <div className="announcement-ticker" aria-label={announcement}>
+            <div className="announcement-ticker" aria-label={tickerText}>
                 <div className="ticker-track">
-                    <span>{announcement}</span>
-                    <span aria-hidden="true">{announcement}</span>
+                    <span>{tickerText}</span>
+                    <span aria-hidden="true">{tickerText}</span>
                 </div>
             </div>
 
             <section className="account-points-card">
                 <div>
                     <span>{t('current_points')}</span>
-                    <strong>{formatPoints(currentBalance)} {t('points')}</strong>
+                    <strong className="home-points-value"><i><AppIcon name="coin" size={25} /></i>{formatPoints(currentBalance)} {t('points')}</strong>
                 </div>
                 <div>
-                    <span>{t('account')}</span>
-                    <strong>{me?.name || me?.email || 'မောင်းဘုရင် player'}</strong>
-                    {me?.username ? <small>@{me.username}</small> : null}
+                    <span>{t('username')}</span>
+                    <strong>{me?.username || '—'}</strong>
                 </div>
             </section>
 
@@ -1154,7 +1236,7 @@ function DashboardScreen() {
                     <span>{t('outside_website')}</span>
                     <strong>{appSettings?.play_bet_label || DEFAULT_APP_SETTINGS.play_bet_label}</strong>
                 </div>
-                <button type="button" onClick={() => openExternal(appSettings?.play_bet_url, 'Play Bet')}>
+                <button type="button" onClick={() => navigate('/betting-sites')}>
                     Play <AppIcon name="arrow" size={19} />
                 </button>
             </section>
@@ -1168,11 +1250,11 @@ function DashboardScreen() {
                     <AppIcon name="coin" size={28} />
                 </div>
                 <div className="exchange-actions">
-                    <button type="button" onClick={() => openExternal(appSettings?.telegram_contact_url, 'Telegram')}>
-                        <span>✈</span> Telegram
+                    <button className="telegram" type="button" onClick={() => openExternal(appSettings?.telegram_contact_url, 'Telegram')}>
+                        <SocialIcon name="telegram" size={21} /> Telegram
                     </button>
-                    <button type="button" onClick={() => openExternal(appSettings?.viber_contact_url, 'Viber')}>
-                        <span>☎</span> Viber
+                    <button className="viber" type="button" onClick={() => openExternal(appSettings?.viber_contact_url, 'Viber')}>
+                        <SocialIcon name="viber" size={21} /> Viber
                     </button>
                 </div>
                 <div className="contact-phone-list" aria-label="Contact phone numbers">
@@ -1183,6 +1265,65 @@ function DashboardScreen() {
                 </div>
             </section>
             {loading ? <p className="page-loading">{t('loading_account')}</p> : null}
+        </main>
+    );
+}
+
+function BettingSitesScreen() {
+    const { api, pushToast, t } = useContext(AuthContext);
+    const navigate = useNavigate();
+    const [sites, setSites] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let active = true;
+        api.get('/betting-sites')
+            .then((response) => {
+                if (active) setSites(response.data.sites || []);
+            })
+            .catch((error) => {
+                if (active) pushToast(error?.response?.data?.message || t('failed_load_betting_sites'), 'err');
+            })
+            .finally(() => {
+                if (active) setLoading(false);
+            });
+        return () => { active = false; };
+    }, [api, pushToast, t]);
+
+    const openSite = (site) => {
+        const url = safeExternalUrl(site.url);
+        if (!url) {
+            pushToast(t('website_link_unavailable'), 'warn');
+            return;
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    return (
+        <main className="app-shell user-page sub-page betting-sites-page">
+            <UserHeader onNotify={() => pushToast(t('notifications_empty'), 'ok')} />
+            <div className="betting-sites-heading">
+                <span>{t('play_betting')}</span>
+                <h1>{t('choose_betting_site')}</h1>
+                <p>{t('betting_sites_help')}</p>
+            </div>
+            {loading ? <p className="page-loading">{t('loading_betting_sites')}</p> : null}
+            {!loading && sites.length === 0 ? <section className="betting-sites-empty">{t('no_betting_sites')}</section> : null}
+            <section className="betting-sites-list">
+                {sites.map((site) => (
+                    <article className="betting-site-card" key={site.id}>
+                        <span className="betting-site-icon"><AppIcon name="link" size={23} /></span>
+                        <div>
+                            <small>{site.name}</small>
+                            <strong>{site.display_text}</strong>
+                        </div>
+                        <button type="button" onClick={() => openSite(site)}>
+                            {site.button_text || t('play')} <AppIcon name="arrow" size={17} />
+                        </button>
+                    </article>
+                ))}
+            </section>
+            <button className="back-pill" type="button" onClick={() => navigate('/dashboard')}>{t('back_home')}</button>
         </main>
     );
 }
@@ -2199,19 +2340,176 @@ function HistoryScreen() {
 }
 
 function AdminDashboardScreen() {
-    const { t } = useContext(AuthContext);
+    const { api, pushToast, t } = useContext(AuthContext);
+    const [statistics, setStatistics] = useState(null);
+
+    useEffect(() => {
+        let active = true;
+        api.get('/admin/overview')
+            .then((response) => {
+                if (active) setStatistics(response.data.statistics || null);
+            })
+            .catch((error) => {
+                if (active) pushToast(error?.response?.data?.message || t('failed_load_overview'), 'err');
+            });
+        return () => { active = false; };
+    }, [api, pushToast, t]);
+
     return (
         <main className="app-shell admin-page admin-dashboard">
             <div className="admin-page-heading">
                 <div><span>{t('admin')}</span><h1>{t('overview')}</h1></div>
             </div>
+            <section className="admin-stat-grid overview-stat-grid" aria-label={t('overview')}>
+                <article className="users">
+                    <span className="overview-stat-icon"><AppIcon name="user" size={21} /></span>
+                    <span>{t('total_users')}</span>
+                    <strong>{statistics ? formatPoints(statistics.total_users) : '—'}</strong>
+                </article>
+                <article className="coins">
+                    <span className="overview-stat-icon"><AppIcon name="coin" size={22} /></span>
+                    <span>{t('total_coins')}</span>
+                    <strong>{statistics ? formatPoints(statistics.total_coins) : '—'}</strong>
+                </article>
+            </section>
             <nav className="admin-quick-grid" aria-label="Primary admin actions">
                 <NavLink className="admin-quick-card users" to="/admin/users"><AppIcon name="user" size={24} /><span><strong>{t('users')}</strong><small>{t('accounts_points')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
                 <NavLink className="admin-quick-card wheel" to="/admin/spin-config"><AppIcon name="wheel" size={24} /><span><strong>{t('wheel')}</strong><small>{t('rewards_cost')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
+                <NavLink className="admin-quick-card betting" to="/admin/betting-sites"><AppIcon name="link" size={24} /><span><strong>{t('betting_sites')}</strong><small>{t('manage_betting_sites')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
                 <NavLink className="admin-quick-card content" to="/admin/app-settings"><AppIcon name="content" size={24} /><span><strong>{t('app_content')}</strong><small>{t('login_links_home')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
                 <NavLink className="admin-quick-card announcement" to="/admin/announcement"><AppIcon name="bell" size={24} /><span><strong>{t('notification_post')}</strong><small>{t('publish_single_post')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
                 <NavLink className="admin-quick-card account" to="/admin/settings"><AppIcon name="shield" size={24} /><span><strong>{t('admin_account')}</strong><small>{t('profile_password')}</small></span><AppIcon name="arrow" size={16} /></NavLink>
             </nav>
+        </main>
+    );
+}
+
+function AdminBettingSitesScreen() {
+    const { api, pushToast, t } = useContext(AuthContext);
+    const [sites, setSites] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [editor, setEditor] = useState(null);
+    const [deleting, setDeleting] = useState(null);
+    const [busy, setBusy] = useState(false);
+
+    const loadSites = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await api.get('/admin/betting-sites');
+            setSites(response.data.sites || []);
+        } catch (error) {
+            pushToast(error?.response?.data?.message || t('failed_load_betting_sites'), 'err');
+        } finally {
+            setLoading(false);
+        }
+    }, [api, pushToast, t]);
+
+    useEffect(() => {
+        loadSites();
+    }, [loadSites]);
+
+    const createSite = () => setEditor({
+        id: null,
+        name: '',
+        display_text: '',
+        url: 'https://',
+        button_text: t('play'),
+        is_active: true,
+        sort_order: sites.length + 1,
+    });
+
+    const saveSite = async (event) => {
+        event.preventDefault();
+        if (!editor) return;
+        setBusy(true);
+        try {
+            const payload = {
+                name: editor.name,
+                display_text: editor.display_text,
+                url: editor.url,
+                button_text: editor.button_text,
+                is_active: Boolean(editor.is_active),
+                sort_order: Number(editor.sort_order) || 0,
+            };
+            if (editor.id) {
+                await api.patch(`/admin/betting-sites/${editor.id}`, payload);
+                pushToast(t('betting_site_updated'), 'ok');
+            } else {
+                await api.post('/admin/betting-sites', payload);
+                pushToast(t('betting_site_created'), 'ok');
+            }
+            setEditor(null);
+            await loadSites();
+        } catch (error) {
+            const validation = error?.response?.data?.errors;
+            const firstError = validation ? Object.values(validation).flat()[0] : null;
+            pushToast(firstError || error?.response?.data?.message || t('betting_site_save_failed'), 'err');
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const deleteSite = async () => {
+        if (!deleting) return;
+        setBusy(true);
+        try {
+            await api.delete(`/admin/betting-sites/${deleting.id}`);
+            setDeleting(null);
+            pushToast(t('betting_site_deleted'), 'ok');
+            await loadSites();
+        } catch (error) {
+            pushToast(error?.response?.data?.message || t('betting_site_delete_failed'), 'err');
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <main className="app-shell admin-page admin-betting-sites-page">
+            <div className="admin-page-heading">
+                <div><span>{t('admin')}</span><h1>{t('betting_sites')}</h1></div>
+                <button type="button" onClick={createSite}>+ {t('add_website')}</button>
+            </div>
+            <p className="admin-page-intro">{t('betting_sites_admin_help')}</p>
+            {loading ? <p className="page-loading">{t('loading_betting_sites')}</p> : null}
+            {!loading && sites.length === 0 ? <section className="admin-empty-state">{t('no_betting_sites_admin')}</section> : null}
+            <section className="admin-betting-sites-list">
+                {sites.map((site) => (
+                    <article className="admin-betting-site-card" key={site.id}>
+                        <span className={`admin-status-dot ${site.is_active ? 'active' : 'disabled'}`} />
+                        <div>
+                            <strong>{site.name}</strong>
+                            <small>{site.display_text}</small>
+                            <em>#{site.sort_order} · {site.is_active ? t('active') : t('disabled')}</em>
+                        </div>
+                        <div className="admin-betting-site-actions">
+                            <button type="button" onClick={() => setEditor({ ...site })}>{t('edit')}</button>
+                            <button className="danger" type="button" onClick={() => setDeleting(site)}>{t('delete')}</button>
+                        </div>
+                    </article>
+                ))}
+            </section>
+
+            <AdminModal open={!!editor} title={editor?.id ? t('edit_website') : t('add_website')} subtitle={t('website_editor_help')} onClose={() => !busy && setEditor(null)} wide>
+                {editor ? (
+                    <form className="admin-modal-form" onSubmit={saveSite}>
+                        <label><span>{t('website_name')}</span><input className="input" maxLength="100" value={editor.name} onChange={(event) => setEditor((current) => ({ ...current, name: event.target.value }))} required /></label>
+                        <label><span>{t('website_display_text')}</span><textarea className="input" rows="4" maxLength="500" value={editor.display_text} onChange={(event) => setEditor((current) => ({ ...current, display_text: event.target.value }))} required /></label>
+                        <label><span>{t('website_url')}</span><input className="input" type="url" maxLength="2048" value={editor.url} onChange={(event) => setEditor((current) => ({ ...current, url: event.target.value }))} required /></label>
+                        <div className="admin-form-grid two">
+                            <label><span>{t('button_text')}</span><input className="input" maxLength="40" value={editor.button_text} onChange={(event) => setEditor((current) => ({ ...current, button_text: event.target.value }))} required /></label>
+                            <label><span>{t('display_order')}</span><input className="input" type="number" min="0" max="100000" value={editor.sort_order} onChange={(event) => setEditor((current) => ({ ...current, sort_order: event.target.value }))} required /></label>
+                        </div>
+                        <label className="check-row"><input type="checkbox" checked={Boolean(editor.is_active)} onChange={(event) => setEditor((current) => ({ ...current, is_active: event.target.checked }))} /><span>{t('website_active_help')}</span></label>
+                        <button className="btn primary" type="submit" disabled={busy}>{busy ? t('saving') : t('save_website')}</button>
+                    </form>
+                ) : null}
+            </AdminModal>
+
+            <ConfirmationDialog open={!!deleting} title={t('delete_website')} confirmLabel={t('delete')} onConfirm={deleteSite} onCancel={() => setDeleting(null)} busy={busy}>
+                <p>{t('confirm_delete_website')}</p>
+                <strong>{deleting?.name}</strong>
+            </ConfirmationDialog>
         </main>
     );
 }
@@ -3139,7 +3437,6 @@ function AdminApplicationSettingsScreen() {
     };
 
     const contactFields = [
-        ['play_bet_url', t('play_bet_url'), 'url'],
         ['play_bet_label', t('play_bet_text'), 'text'],
         ['telegram_contact_url', t('telegram_account_url'), 'text'],
         ['viber_contact_url', t('viber_contact_url'), 'text'],

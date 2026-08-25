@@ -1,4 +1,4 @@
-# Lucky Draw PWA — Software Specification (Phase 1 Ready)
+# Moung Ba Yin PWA — Software Specification (Phase 1 Ready)
 
 ## 1) Product overview
 
@@ -87,13 +87,15 @@ Core tables:
   - compact per-user read marker; every publish becomes unread without creating one notification row per user.
 - `push_subscriptions`
   - encrypted Web Push endpoint and browser keys per user/device, deduplicated by an indexed SHA-256 endpoint hash.
+- `betting_sites`
+  - admin-managed website name, user-facing display text, destination URL, button text, active status, and display order.
 
 ## 6) Domain logic
 
 - Wallet is initialized lazily (`getOrCreateWallet`) at first login or first write.
 - Daily bonus:
-  - admin configures seven point amounts in Sunday-to-Saturday order; Sunday is Day 1.
-  - the displayed week rolls over automatically every Sunday without a scheduled task.
+  - admin configures seven point amounts in Monday-to-Sunday order; Monday is Day 1.
+  - the displayed week rolls over automatically every Monday without a scheduled task.
   - each day reports `claimed`, `missed`, `today`, or `upcoming`; claimed days keep their actual awarded amount.
   - backend checks today’s claim before inserting.
   - creates immutable `daily_bonus` ledger row and updates wallet in transaction.
@@ -120,6 +122,7 @@ Core tables:
 - One current announcement header appears below the user header; opening it displays the full post and marks that version read.
 - User Settings provides explicit Allow/Disable Web Push controls. Permission is requested only from the button action.
 - Service-worker push notifications replace the prior post notification by tag and open the nested-path-safe announcement page.
+- The dashboard Play button opens an internal betting-website directory. Only active entries are shown in admin-defined order; selecting one opens its validated HTTP(S) URL in a new tab.
 
 ## 8) API contract (Phase 1)
 
@@ -142,6 +145,7 @@ Authenticated user:
 - `POST /api/announcement/read`
 - `GET /api/push/config`
 - `POST|DELETE /api/push/subscriptions`
+- `GET /api/betting-sites`
 
 Admin:
 
@@ -152,6 +156,8 @@ Admin:
 - `PATCH /api/admin/spin-configuration`
 - `GET|PATCH /api/admin/profile`
 - `GET|PUT /api/admin/announcement`
+- `GET|POST /api/admin/betting-sites`
+- `PATCH|DELETE /api/admin/betting-sites/{bettingSite}`
 
 ## 9A) Single-post notification behavior
 

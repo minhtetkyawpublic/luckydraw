@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PointsWallet;
 use App\Models\PointTransaction;
 use App\Models\User;
 use App\Services\AdminAuditService;
@@ -23,6 +24,18 @@ class AdminUserController extends Controller
         private readonly SessionSecurityService $sessionSecurityService,
         private readonly SpinCreditService $spinCreditService,
     ) {}
+
+    public function overview(): JsonResponse
+    {
+        return response()->json([
+            'statistics' => [
+                'total_users' => User::query()->where('role', 'user')->count(),
+                'total_coins' => (int) PointsWallet::query()
+                    ->whereHas('user', fn ($query) => $query->where('role', 'user'))
+                    ->sum('balance'),
+            ],
+        ]);
+    }
 
     public function index(Request $request): JsonResponse
     {
