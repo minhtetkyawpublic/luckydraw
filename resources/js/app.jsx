@@ -1,6 +1,7 @@
 ﻿import './bootstrap';
 
 import axios from 'axios';
+import { calculateWheelEconomics } from './wheelEconomics';
 import { calculateWheelRotation } from './wheelMath';
 import { appTranslate } from './translations';
 import React, {
@@ -3514,6 +3515,44 @@ function AdminApplicationSettingsScreen() {
     );
 }
 
+function WheelSafetyPanel({ segments, packages, t }) {
+    const result = useMemo(() => calculateWheelEconomics(segments, packages), [segments, packages]);
+    const tone = ['safe', 'caution', 'loss', 'unstable'].includes(result.status) ? result.status : 'incomplete';
+    const statusLabel = {
+        safe: t('wheel_safety_good'),
+        caution: t('wheel_safety_caution'),
+        loss: t('wheel_safety_loss'),
+        unstable: t('wheel_safety_unstable'),
+        incomplete: t('wheel_safety_incomplete'),
+    }[result.status];
+
+    return (
+        <section className={`wheel-safety-panel ${tone}`}>
+            <header>
+                <span><AppIcon name="shield" size={20} /></span>
+                <div><small>{t('wheel_safety')}</small><strong>{statusLabel}</strong></div>
+            </header>
+            {result.status === 'incomplete' ? (
+                <p>{t('wheel_safety_add_package')}</p>
+            ) : result.status === 'unstable' ? (
+                <p>{t('wheel_safety_extra_spins_danger')}</p>
+            ) : (
+                <>
+                    <p>{t(`wheel_safety_${result.status}_help`)}</p>
+                    <div className="wheel-safety-numbers">
+                        <span><small>{t('players_receive')}</small><strong>{formatPoints(result.worstPackage.playerReturnPer100)} / 100</strong></span>
+                        <span>
+                            <small>{result.worstPackage.adminKeepsPer100 >= 0 ? t('admin_keeps') : t('admin_loses')}</small>
+                            <strong>{formatPoints(Math.abs(result.worstPackage.adminKeepsPer100))} / 100</strong>
+                        </span>
+                    </div>
+                    <small className="wheel-safety-footnote">{t('wheel_safety_simple_note')}</small>
+                </>
+            )}
+        </section>
+    );
+}
+
 function AdminSpinConfigScreen() {
     const { api, pushToast, t } = useContext(AuthContext);
     const [editing, setEditing] = useState(null);
@@ -3644,6 +3683,7 @@ function AdminSpinConfigScreen() {
                         <AppIcon name="arrow" size={17} />
                     </button>
                 </div>
+                {editing ? <WheelSafetyPanel segments={editing.segments || []} packages={exchangePackages} t={t} /> : null}
             </SpinnerCard>
 
                 {editing ? (
@@ -3655,6 +3695,7 @@ function AdminSpinConfigScreen() {
                         wide
                     >
                         <div className="admin-segment-list">
+                        <WheelSafetyPanel segments={editing.segments || []} packages={exchangePackages} t={t} />
                         {(editing.segments || []).map((segment, index) => (
                             <details className="segment-block" key={`${segment.id || index}`}>
                                 <summary>
@@ -3714,6 +3755,7 @@ function AdminSpinConfigScreen() {
                 ) : null}
             <AdminModal open={editorModal === 'packages'} title={t('spin_packages')} subtitle={t('manage_spin_packages')} onClose={() => setEditorModal(null)} wide>
                 <div className="admin-segment-list">
+                    <WheelSafetyPanel segments={editing?.segments || []} packages={exchangePackages} t={t} />
                     {exchangePackages.map((item, index) => (
                         <div className="segment-block exchange-package-editor" key={item.id || `new-${index}`}>
                             <label><span>{t('point_cost')}</span><input className="input" type="number" min="1" value={item.points_cost} onChange={(event) => updateExchangePackage(index, 'points_cost', event.target.value)} /></label>
