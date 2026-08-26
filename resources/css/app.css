@@ -608,6 +608,49 @@ body {
     fill: #fff7c8;
 }
 
+.spin-token-icon {
+    overflow: visible;
+    filter: drop-shadow(0 3px 4px rgb(57 17 116 / 32%));
+}
+
+.spin-token-edge {
+    fill: #ffb400;
+    stroke: #7132c9;
+    stroke-width: 1.1;
+}
+
+.spin-token-face {
+    fill: #7c3aed;
+    stroke: #d9b8ff;
+    stroke-width: 1;
+}
+
+.spin-token-hub {
+    fill: #ffd33d;
+    stroke: #fff1a6;
+    stroke-width: .8;
+}
+
+.spin-token-spokes {
+    fill: none;
+    stroke: #fff;
+    stroke-linecap: round;
+    stroke-width: 1.45;
+}
+
+.spin-token-shine {
+    fill: none;
+    stroke: #f2ddff;
+    stroke-linecap: round;
+    stroke-width: 1.45;
+}
+
+.spin-token-spark {
+    fill: #fff1a6;
+    stroke: #ffb400;
+    stroke-width: .4;
+}
+
 .notification-bell {
     position: relative;
 }

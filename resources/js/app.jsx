@@ -77,6 +77,19 @@ function formatTimeRemaining(totalSeconds) {
     return `${minutes}m ${String(remainder).padStart(2, '0')}s`;
 }
 function AppIcon({ name, size = 24, strokeWidth = 2.2 }) {
+    if (name === 'spin-token') {
+        return (
+            <svg aria-hidden="true" className="app-icon spin-token-icon" width={size} height={size} viewBox="0 0 24 24">
+                <circle className="spin-token-edge" cx="12" cy="12" r="10" />
+                <circle className="spin-token-face" cx="12" cy="12" r="7.6" />
+                <circle className="spin-token-hub" cx="12" cy="12" r="2" />
+                <path className="spin-token-spokes" d="M12 4.8v5.1M18.85 9.78l-4.86 1.58M16.23 17.84l-3-4.13M7.77 17.84l3-4.13M5.15 9.78l4.86 1.58" />
+                <path className="spin-token-shine" d="M7.2 8.3A6.2 6.2 0 0 1 11 6.1" />
+                <path className="spin-token-spark" d="m18.2 4.2.5 1.1 1.1.5-1.1.5-.5 1.1-.5-1.1-1.1-.5 1.1-.5.5-1.1Z" />
+            </svg>
+        );
+    }
+
     if (name === 'coin') {
         return (
             <svg aria-hidden="true" className="app-icon coin-icon" width={size} height={size} viewBox="0 0 24 24">
@@ -1390,14 +1403,14 @@ function ExchangeSpinsScreen() {
                 <div><span>{t('spin_packages')}</span><h1>{t('exchange_spins')}</h1></div>
                 <BalancePill balance={pointBalance} />
             </div>
-            <div className="spin-credit-pill"><AppIcon name="wheel" size={20} /> {formatPoints(spinBalance)} {t('spins')}</div>
+            <div className="spin-credit-pill"><AppIcon name="spin-token" size={21} /> {formatPoints(spinBalance)} {t('spins')}</div>
             <p className="exchange-help">{t('exchange_spins_help')}</p>
             {loading ? <p className="page-loading">{t('loading')}</p> : null}
             {!loading && packages.length === 0 ? <p className="exchange-help">{t('no_exchange_packages')}</p> : null}
             <section className="exchange-package-list">
                 {packages.map((item) => (
                     <article className="exchange-package-card" key={item.id}>
-                        <div className="package-art"><AppIcon name="wheel" size={30} /></div>
+                        <div className="package-art"><AppIcon name="spin-token" size={32} /></div>
                         <div><strong>{formatPoints(item.points_cost)} {t('points')}</strong><span>{formatPoints(item.spins_amount)} {t('spins')}</span></div>
                         <button type="button" disabled={busyId !== null || pointBalance < item.points_cost} onClick={() => setPendingPackage(item)}>
                             {busyId === item.id ? t('exchanging') : t('exchange')}
@@ -1614,7 +1627,7 @@ function SettingsScreen() {
                 <div className="profile-details">
                     <span>{t('your_account')}</span>
                     <strong>{me?.name || 'မောင်းဘုရင် player'}</strong>
-                    <p>{me?.username ? `@${me.username}` : t('member_account')}</p>
+                    <p>{me?.username || t('member_account')}</p>
                     <div><AppIcon name="coin" size={20} /> {formatPoints(spinStatus?.wallet_balance || 0)} {t('points')}</div>
                 </div>
             </section>
