@@ -1,7 +1,7 @@
 {
     "name": "MBY Admin",
     "short_name": "MBY Admin",
-    "description": "Moung Ba Yin administration app.",
+    "description": "Moung Bayin administration app.",
     "id": "./admin",
     "start_url": "./admin",
     "display": "standalone",

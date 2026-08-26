@@ -1,4 +1,4 @@
-const VERSION = 'v11-moung-ba-yin-ui';
+const VERSION = 'v13-moung-bayin-manifest';
 const PATHNAME = new URL(self.location.href).pathname;
 const SW_MARKER = '/sw.js';
 const BASE_PATH = (PATHNAME.lastIndexOf(SW_MARKER) >= 0
@@ -203,6 +203,22 @@ self.addEventListener('fetch', (event) => {
                     status: 503,
                     headers: { 'content-type': 'text/plain; charset=utf-8' },
                 });
+            }
+        })());
+        return;
+    }
+
+    if (url.pathname.endsWith('.webmanifest')) {
+        event.respondWith((async () => {
+            try {
+                const networkResponse = await fetch(request, { cache: 'no-store' });
+                if (networkResponse?.ok) {
+                    const cache = await caches.open(SHELL_CACHE);
+                    await cache.put(request, networkResponse.clone());
+                }
+                return networkResponse;
+            } catch {
+                return caches.match(request);
             }
         })());
         return;

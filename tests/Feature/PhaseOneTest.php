@@ -79,7 +79,7 @@ class PhaseOneTest extends TestCase
         $this->get('/login')
             ->assertOk()
             ->assertSee('id="app"', false)
-            ->assertSee('Moung Ba Yin')
+            ->assertSee('Moung Bayin')
             ->assertSee('/manifest.webmanifest', false);
         $this->get('/admin/login')
             ->assertOk()
@@ -93,8 +93,8 @@ class PhaseOneTest extends TestCase
         $userManifest = json_decode(file_get_contents(public_path('manifest.webmanifest')), true, flags: JSON_THROW_ON_ERROR);
         $adminManifest = json_decode(file_get_contents(public_path('admin-manifest.webmanifest')), true, flags: JSON_THROW_ON_ERROR);
 
-        $this->assertSame('Moung Ba Yin', $userManifest['name']);
-        $this->assertSame('Moung Ba Yin', $userManifest['short_name']);
+        $this->assertSame('Moung Bayin', $userManifest['name']);
+        $this->assertSame('Moung Bayin', $userManifest['short_name']);
         $this->assertSame('MBY Admin', $adminManifest['name']);
         $this->assertSame('./', $userManifest['id']);
         $this->assertSame('./admin', $adminManifest['id']);

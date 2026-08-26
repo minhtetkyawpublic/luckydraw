@@ -1,7 +1,7 @@
 {
-    "name": "Moung Ba Yin",
-    "short_name": "Moung Ba Yin",
-    "description": "Moung Ba Yin points and rewards app.",
+    "name": "Moung Bayin",
+    "short_name": "Moung Bayin",
+    "description": "Moung Bayin points and rewards app.",
     "id": "./",
     "start_url": "./",
     "display": "standalone",

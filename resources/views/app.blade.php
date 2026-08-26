@@ -3,8 +3,9 @@
     @php
         $configuredBasePath = rtrim((string) parse_url(config('app.url'), PHP_URL_PATH), '/');
         $isAdminPortal = request()->is('admin') || request()->is('admin/*');
-        $installedAppName = $isAdminPortal ? 'MBY Admin' : 'Moung Ba Yin';
+        $installedAppName = $isAdminPortal ? 'MBY Admin' : 'Moung Bayin';
         $manifestFile = $isAdminPortal ? 'admin-manifest.webmanifest' : 'manifest.webmanifest';
+        $manifestVersion = '20260826-2';
     @endphp
     <head>
         <meta charset="UTF-8">
@@ -16,7 +17,7 @@
         <title>{{ $installedAppName }}</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
-        <link rel="manifest" href="{{ $configuredBasePath }}/{{ $manifestFile }}">
+        <link rel="manifest" href="{{ $configuredBasePath }}/{{ $manifestFile }}?v={{ $manifestVersion }}">
         <link rel="icon" type="image/png" sizes="32x32" href="{{ $configuredBasePath }}/logo.png">
         <link rel="icon" type="image/png" sizes="192x192" href="{{ $configuredBasePath }}/logo.png">
         <link rel="apple-touch-icon" sizes="180x180" href="{{ $configuredBasePath }}/logotransparent.png">
